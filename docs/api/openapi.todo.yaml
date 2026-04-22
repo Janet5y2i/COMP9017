@@ -1,0 +1,15 @@
+openapi: 3.0.3
+info:
+  title: Quiz Game API
+  version: 0.1.0
+  description: TODO - document endpoints after implementation.
+servers:
+  - url: http://localhost:5001/api
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        "200":
+          description: API is reachable
+
