@@ -21,19 +21,17 @@ const questionSchema = new mongoose.Schema(
       required: true,
       trim: true
     },
+    imageUrl: {
+      type: String,
+      trim: true,
+      default: undefined
+    },
     isActive: {
       type: Boolean,
       default: true
-    },
-    // Variation TODO: add exactly one approved extra field if needed.
-    // Examples: category, imageUrl, explanation, timeLimitSeconds.
-    variationMeta: {
-      type: mongoose.Schema.Types.Mixed,
-      default: {}
     }
   },
   { timestamps: true }
 );
 
 export default mongoose.model('Question', questionSchema);
-
