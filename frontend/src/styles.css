@@ -22,6 +22,17 @@
   --accent-contrast: #071311;
 }
 
+/* Reuse root theme for Tailwind theme */
+@theme {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-contrast: var(--accent-contrast);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -39,7 +50,7 @@ a {
 
 button,
 .button-link {
-  border: 1px solid var(--accent);
+  /* border: 1px solid var(--accent); */
   border-radius: 6px;
   background: var(--accent);
   color: var(--accent-contrast);
@@ -51,6 +62,24 @@ button,
   padding: 0 14px;
   text-decoration: none;
   font: inherit;
+}
+
+/* Common hover and pressed shading for buttons */
+button:hover,
+.button-link:hover {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.2));
+}
+
+button:active,
+.button-link:active {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.35));
+}
+
+button:disabled,
+button:hover:disabled,
+button:active:disabled {
+  background-color: gray;
+  background-image: none;
 }
 
 .button-link.secondary {

@@ -2,6 +2,13 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import { fail } from '../utils/envelope.js';
 
+/**
+ * This middleware is used to require authentication for an API route
+ * before the route handler actually handle the requests.
+ * 
+ * Authentication is done via JWT as a Bearer token in the Authorization
+ * header of the request.
+ */
 export async function requireAuth(req, res, next) {
   try {
     const header = req.headers.authorization || '';
