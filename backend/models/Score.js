@@ -39,5 +39,17 @@ const scoreSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// JSON transformation for score
+scoreSchema.set('toJSON', {
+  transform: (document, returnedObject) => {
+    returnedObject.id = returnedObject._id.toString()
+    delete returnedObject._id
+    delete returnedObject.__v
+  }
+})
+
+// Indexing to improve aggregation performance
+scoreSchema.index({ userId: 1 });
+
 export default mongoose.model('Score', scoreSchema);
 

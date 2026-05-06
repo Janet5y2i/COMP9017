@@ -83,4 +83,13 @@ const user = new User({
 });
 await user.save();
 
+const user2 = new User({
+  username: "testuser2",
+  email: "a@a.a",
+  // password is 123
+  passwordHash: "$2b$12$HrUlr1y24VERvxg/2VIUNuEKq8B19n/nK5E9asMJOF64HKJ9gh1my",
+  role: "player"
+});
+await user2.save();
+
 mongoose.connection.close()
