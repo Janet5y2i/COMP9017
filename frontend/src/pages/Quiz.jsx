@@ -1,84 +1,88 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import QuizQuestion from "../components/QuizQuestion";
-
-const tempQuestions = [
-  {
-    text: "What is this question? (1)",
-    options: [
-      "A. aaa",
-      "B. bbb",
-      "C. ccc",
-      "D. ddd"
-    ],
-    correctAnswer: "A. aaa",
-    imageUrl: "",
-    isActive: true
-  },
-  {
-    text: "What is this question? (2)",
-    options: [
-      "A. aaa",
-      "B. bbb",
-      "C. ccc",
-      "D. ddd"
-    ],
-    correctAnswer: "B. bbb",
-    imageUrl: "",
-    isActive: true
-  },
-  {
-    text: "What is this question? (3)",
-    options: [
-      "A. aaa",
-      "B. bbb",
-      "C. ccc",
-      "D. ddd"
-    ],
-    correctAnswer: "B. bbb",
-    imageUrl: "",
-    isActive: true
-  }
-]
+import quiz_api from "../api/quiz_api";
+import QuizResult from "../components/QuizResult";
 
 export default function Quiz() {
+  const [questions, setQuestion] = useState([]);
   const [quizIdx, setQuizIdx] = useState(-1);
+  const [result, setResult] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null);
 
-  const handleQuizSubmit = (event) => {
-    event.preventDefault();
+  // Get the quiz data when first load the quiz page
+  const handleStartClick = useCallback(() => {
+    quiz_api.getQuizQuestion()
+      .then((questions) => {
+        // console.log(questions);
+        setQuestion(questions);
+        setQuizIdx(0);
+      })
+      .catch((error) => {
+        // console.error(error);
+        setErrorMsg(error);
+      })
+  }, []);
 
-    if (quizIdx < tempQuestions.length - 1) {
+  const onButtonClick = useCallback(() => {
+    if (quizIdx < questions.length - 1) {
       setQuizIdx(quizIdx + 1);
-      return;
+    }
+  }, []);
+
+  const handleSubmit = useCallback((event) => {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    const formJson = Object.fromEntries(formData.entries());
+
+    let questionIds = [];
+    let answers = [];
+    for (let i = 0; i < questions.length; i++) {
+      questionIds.push(questions[i].id);
+      answers.push(Number(formJson[`q${i}`]));
     }
 
-    // Submit answer to API TODO
-    console.log("Submit TODO")
-  }
+    // Submit answer to API
+    quiz_api.submitAnswer(questionIds, answers)
+      .then((res) => {
+        console.log("QUIZ RESULT:", res);
+        setResult(res);
+      });
+  }, [questions]);
 
 
   if (quizIdx < 0) {
+    // Quiz starting box
     return (
-      <section className="page">
-        <h1>Quiz</h1>
-        <button onClick={() => setQuizIdx(0)}>Start</button>
+      // TODO make prettier
+      <section className="page flex flex-col items-center">
+        <h1 className="text-3xl font-bold">Quiz Game</h1>
+        <p className="my-5 text-center w-[70%]">
+          This is a multiple choice quiz. Each question have 4 possible answers, with only one correct answer. There is no time limit, and the total score will be displayed at the end. Have fun!
+        </p>
+        <button onClick={handleStartClick} disabled={!questions}>
+          {errorMsg ? "Retry" : "Start now!"}
+        </button>
+        <p hidden={!errorMsg} className="mt-5">
+          Could not load quiz at the moment. Please try again later.
+        </p>
       </section>
     );
   }
-  else if (0 <= quizIdx && quizIdx < tempQuestions.length) {
+  else if (0 <= quizIdx && quizIdx < questions.length && !result) {
 
     return (
       <section className="page">
-        <form>
+        <form onSubmit={handleSubmit}>
 
-          {tempQuestions.map(
+          {questions.map(
             (quiz, qIdx) => {
               return (
                 <div key={`q${qIdx}`} hidden={qIdx !== quizIdx}>
                   <QuizQuestion
                     question={quiz}
                     qIdx={qIdx}
-                    handleQuizSubmit={handleQuizSubmit}
-                    isLastQuestion={qIdx === tempQuestions.length - 1}
+                    onButtonClick={onButtonClick}
+                    isLastQuestion={qIdx === questions.length - 1}
                   />
                 </div>
               );
@@ -92,7 +96,7 @@ export default function Quiz() {
   else {
     return (
       <section className="page">
-        done
+        <QuizResult result={result} />
       </section>
     );
   }

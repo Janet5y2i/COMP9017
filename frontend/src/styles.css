@@ -71,7 +71,8 @@ button:hover,
 }
 
 button:active,
-.button-link:active {
+.button-link:active,
+.activeShaded:active {
   background-image: linear-gradient(rgba(0, 0, 0, 0.35));
 }
 

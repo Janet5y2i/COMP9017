@@ -8,7 +8,9 @@ import Score from '../models/Score.js';
 export async function getQuiz(req, res, next) {
   try {
     // TODO should choose randomly from the set of active questions
-    const questions = await Question.find({});
+    // TODO get only a certain number of questions (set with env)
+    // select() to remove correctAnswer field
+    const questions = await Question.find({}).select("-correctAnswer");
 
     return ok(res, questions, 200);
   } catch (error) {
