@@ -22,11 +22,25 @@ async function submitAnswer(questionIds, answers) {
 }
 
 async function getLeaderBoard() {
+    const result = await api.get('/quiz/leaderboard');
 
+    if (result.success) {
+        return result.data;
+    }
+    else {
+        throw new Error("Could not get leaderboard data");
+    }
 }
 
 async function getAttemptHistory() {
+    const result = await api.get('/quiz/attempts/me');
 
+    if (result.success) {
+        return result.data;
+    }
+    else {
+        throw new Error("Could not get attempts data");
+    }
 }
 
 export default {

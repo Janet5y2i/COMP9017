@@ -27,6 +27,7 @@ export default function QuizQuestion({
         {question.options.map(
           (option, idx) => {
             // A radio option for each answer
+            // TODO zoom animation when hover
             return (
               <label key={`q${qIdx}-${idx}`} className="activeShaded block p-4 bg-surface my-3 border-muted border-2 rounded-xl hover:border-accent hover:text-accent-contrast hover:bg-accent has-checked:bg-accent has-checked:border-accent has-checked:text-accent-contrast">
                 <input type="radio" id={`q${qIdx}-${idx}`} name={`q${qIdx}`} value={idx} onChange={() => setAnswered(true)} className="hidden" />
