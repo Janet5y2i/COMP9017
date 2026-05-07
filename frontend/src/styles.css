@@ -33,6 +33,11 @@
   --color-accent-contrast: var(--accent-contrast);
 }
 
+/* Custom utility class for transform animation */
+@utility transform-anim {
+  @apply transform transition duration-200;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -50,7 +55,7 @@ a {
 
 button,
 .button-link {
-  /* border: 1px solid var(--accent); */
+  border: none;
   border-radius: 6px;
   background: var(--accent);
   color: var(--accent-contrast);
@@ -58,16 +63,18 @@ button,
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  text-align: center;
   min-height: 38px;
-  padding: 0 14px;
+  padding: 0.5em 1em;
   text-decoration: none;
   font: inherit;
 }
 
 /* Common hover and pressed shading for buttons */
-button:hover,
+button:hover:enabled,
 .button-link:hover {
-  background-image: linear-gradient(rgba(0, 0, 0, 0.2));
+  @apply scale-110 transform-anim;
+  /* background-image: linear-gradient(rgba(0, 0, 0, 0.2)); */
 }
 
 button:active,

@@ -29,7 +29,7 @@ export default function Quiz() {
     if (quizIdx < questions.length - 1) {
       setQuizIdx(quizIdx + 1);
     }
-  }, []);
+  }, [quizIdx]);
 
   const handleSubmit = useCallback((event) => {
     event.preventDefault();
@@ -51,11 +51,9 @@ export default function Quiz() {
       });
   }, [questions]);
 
-
   if (quizIdx < 0) {
     // Quiz starting box
     return (
-      // TODO make prettier
       <section className="page flex flex-col items-center">
         <FontAwesomeIcon icon={faDice} className='text-7xl mb-7 text-orange-600' />
         <h1 className="text-3xl font-bold text-accent">Quiz Game</h1>
