@@ -55,6 +55,7 @@ export default function Admin() {
   const [questions, setQuestions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [togglingQuestionId, setTogglingQuestionId] = useState(null);
   const [error, setError] = useState('');
   const [feedback, setFeedback] = useState('');
   const [editingQuestionId, setEditingQuestionId] = useState(null);
@@ -146,6 +147,35 @@ export default function Admin() {
       await loadQuestions();
     } catch (deleteError) {
       setError(deleteError.message);
+    }
+  }
+
+  async function handleToggle(question) {
+    const actionLabel = question.isActive ? 'deactivate' : 'activate';
+    const confirmed = window.confirm(`Do you want to ${actionLabel} this question?`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setTogglingQuestionId(question.id);
+      setError('');
+      setFeedback('');
+
+      const response = await api.patch(`/admin/questions/${question.id}/toggle`);
+      const updatedQuestion = response.data.question;
+
+      setQuestions((currentQuestions) =>
+        currentQuestions.map((currentQuestion) =>
+          currentQuestion.id === updatedQuestion.id ? updatedQuestion : currentQuestion
+        )
+      );
+      setFeedback(response.data.message);
+    } catch (toggleError) {
+      setError(toggleError.message);
+    } finally {
+      setTogglingQuestionId(null);
     }
   }
 
@@ -250,6 +280,18 @@ export default function Admin() {
                     </div>
 
                     <div className="flex gap-3">
+                      <button
+                        className="button-link secondary"
+                        disabled={togglingQuestionId === question.id}
+                        onClick={() => handleToggle(question)}
+                        type="button"
+                      >
+                        {togglingQuestionId === question.id
+                          ? 'Updating...'
+                          : question.isActive
+                            ? 'Set inactive'
+                            : 'Set active'}
+                      </button>
                       <button
                         className="button-link secondary"
                         onClick={() => startEditing(question)}
