@@ -26,15 +26,20 @@ export default function Leaderboard() {
       </h1>
 
       {data ?
-      // TODO use table here with table headers
-        <ul className='w-full'>
+        <ul className='w-full text-center'>
+
+          
+          <li className='w-full font-bold mt-3 mb-5'>
+            <span className='w-[15%] inline-block'>Rank</span>
+            <span className='w-[65%] inline-block'>Username</span>
+            <span className='w-[20%] inline-block'>Highest Score Achieved</span>
+          </li>
+
           {data.map((entry, index) => (
-            <li key={`user${index}`} className='w-full'>
-              <div className='flex justify-between'>
-                <span>{index + 1}</span>
-                <span>{entry.user.username}</span>
-                <span>{entry.maxUserScore}</span>
-              </div>
+            <li key={`user${index}`} className='w-full bg-line py-4 my-3 rounded-xl shadow transform-anim hover:scale-x-102 hover:scale-y-105 hover:font-bold'>
+                <span className='w-[15%] inline-block'>{index + 1}</span>
+                <span className='w-[65%] inline-block'>{entry.user.username}</span>
+                <span className='w-[20%] inline-block'>{entry.maxUserScore}</span>
             </li>
           ))}
         </ul> :

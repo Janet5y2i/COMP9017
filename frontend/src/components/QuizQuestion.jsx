@@ -3,6 +3,7 @@ import { useState } from "react";
 export default function QuizQuestion({
   question,
   qIdx,
+  nQuestions,
   onButtonClick,
   isLastQuestion
 }) {
@@ -11,7 +12,7 @@ export default function QuizQuestion({
   return (
     <div>
       <h1 className="text-3xl font-bold">
-        Question {qIdx + 1}
+        Question {qIdx + 1} of {nQuestions}
       </h1>
       <p className="my-5 text-xl">
         {question.text}

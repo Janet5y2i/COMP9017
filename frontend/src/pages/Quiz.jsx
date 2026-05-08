@@ -76,12 +76,13 @@ export default function Quiz() {
         <form onSubmit={handleSubmit}>
 
           {questions.map(
-            (quiz, qIdx) => {
+            (quiz, qIdx, arr) => {
               return (
                 <div key={`q${qIdx}`} hidden={qIdx !== quizIdx}>
                   <QuizQuestion
                     question={quiz}
                     qIdx={qIdx}
+                    nQuestions={arr.length}
                     onButtonClick={onButtonClick}
                     isLastQuestion={qIdx === questions.length - 1}
                   />

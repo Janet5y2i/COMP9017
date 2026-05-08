@@ -4,15 +4,24 @@ import z from 'zod';
 import Question from "../models/Question.js";
 import User from '../models/User.js';
 import Score from '../models/Score.js';
+import arrays from '../utils/arrays.js';
+
+const N_QUESTIONS = process.env.N_QUESTIONS || 8;
 
 export async function getQuiz(req, res, next) {
   try {
-    // TODO should choose randomly from the set of active questions
-    // TODO get only a certain number of questions (set with env)
     // select() to remove correctAnswer field
-    const questions = await Question.find({}).select("-correctAnswer");
+    const questions = await Question
+      .find({ isActive: true })
+      .select("-correctAnswer");
 
-    return ok(res, questions, 200);
+    // Shuffle the list of question
+    arrays.shuffle(questions);
+
+    // Take only UP TO N_QUESTIONS questions
+    const returnedQuestions = questions.slice(0, N_QUESTIONS);
+
+    return ok(res, returnedQuestions, 200);
   } catch (error) {
     return next(error);
   }
@@ -38,7 +47,7 @@ export async function submitQuiz(req, res, next) {
     // Validate response body
     const qAns = QuizAnswer.parse(req.body);
 
-    // Get the authenticated user TODO
+    // TODO Get the authenticated user
     const userId = "69faf93ae00a5dec5c874a13";
     const user = await User.findById(userId);
 
@@ -81,7 +90,7 @@ export async function submitQuiz(req, res, next) {
 
 export async function getMyAttempts(req, res, next) {
   try {
-    // Get the authenticated user TODO
+    // TODO Get the authenticated user
     const userId = "69f9f7bdd0a45f8c2ef202c3";
     const user = await User.findById(userId);
 
