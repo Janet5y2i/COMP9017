@@ -120,6 +120,10 @@ button:active:disabled {
   text-decoration: none;
 }
 
+.brand:hover {
+  @apply scale-105 transform-anim;
+}
+
 nav,
 .actions,
 .button-row {
@@ -131,6 +135,11 @@ nav,
 nav a {
   color: var(--muted);
   text-decoration: none;
+}
+
+nav a:hover {
+  @apply scale-105 transform-anim;
+  color: var(--accent);
 }
 
 nav a.active {
