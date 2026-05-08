@@ -22,6 +22,31 @@
   --accent-contrast: #071311;
 }
 
+/* Reuse root theme for Tailwind theme */
+@theme {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-contrast: var(--accent-contrast);
+}
+
+/* Custom utility class for transform animation */
+@utility transform-anim {
+  @apply transform transition duration-200;
+}
+
+/* Custom utility classes for shaded */
+@utility shaded {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.2));
+}
+
+@utility shaded-extra {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.35));
+}
+
 * {
   box-sizing: border-box;
 }
@@ -39,7 +64,7 @@ a {
 
 button,
 .button-link {
-  border: 1px solid var(--accent);
+  border: none;
   border-radius: 6px;
   background: var(--accent);
   color: var(--accent-contrast);
@@ -47,10 +72,31 @@ button,
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  text-align: center;
   min-height: 38px;
-  padding: 0 14px;
+  padding: 0.5em 1em;
   text-decoration: none;
   font: inherit;
+}
+
+/* Common hover and pressed shading for buttons */
+button:hover:enabled,
+.button-link:hover {
+  @apply scale-110 transform-anim;
+  /* background-image: linear-gradient(rgba(0, 0, 0, 0.2)); */
+}
+
+button:active,
+.button-link:active,
+.activeShaded:active {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.35));
+}
+
+button:disabled,
+button:hover:disabled,
+button:active:disabled {
+  background-color: gray;
+  background-image: none;
 }
 
 .button-link.secondary {
@@ -83,6 +129,10 @@ button,
   text-decoration: none;
 }
 
+.brand:hover {
+  @apply scale-105 transform-anim;
+}
+
 nav,
 .actions,
 .button-row {
@@ -94,6 +144,11 @@ nav,
 nav a {
   color: var(--muted);
   text-decoration: none;
+}
+
+nav a:hover {
+  @apply scale-105 transform-anim;
+  color: var(--accent);
 }
 
 nav a.active {
