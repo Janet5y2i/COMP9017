@@ -38,6 +38,15 @@
   @apply transform transition duration-200;
 }
 
+/* Custom utility classes for shaded */
+@utility shaded {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.2));
+}
+
+@utility shaded-extra {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.35));
+}
+
 * {
   box-sizing: border-box;
 }
