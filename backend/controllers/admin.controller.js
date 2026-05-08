@@ -152,8 +152,23 @@ export async function deleteQuestion(req, res, next) {
 
 export async function toggleQuestion(req, res, next) {
   try {
-    // TODO(admin): toggle active/inactive status.
-    return fail(res, 'TODO: implement toggle question.', 501);
+    if (!isValidQuestionId(req.params.id)) {
+      return fail(res, 'Invalid question id.', 400);
+    }
+
+    const question = await Question.findById(req.params.id);
+
+    if (!question) {
+      return fail(res, 'Question not found.', 404);
+    }
+
+    question.isActive = !question.isActive;
+    await question.save();
+
+    return ok(res, {
+      question: formatQuestion(question),
+      message: `Question ${question.isActive ? 'activated' : 'deactivated'}.`
+    });
   } catch (error) {
     return next(error);
   }
