@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <signal.h>
 
 
 int main(int argc, char** argv, char** envp) {
@@ -13,7 +14,7 @@ int main(int argc, char** argv, char** envp) {
 
     pid_t server_pid = atoi(argv[1]);
     //send aa signal to server(pid = server_pid)
-    Kill(server_pid, SIGUSR1);
+    kill(server_pid, SIGUSR1);
 
 
 
