@@ -69,6 +69,7 @@ export default function Admin() {
   const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState('');
   const [feedback, setFeedback] = useState('');
+  const [importResult, setImportResult] = useState(null);
   const [editingQuestionId, setEditingQuestionId] = useState(null);
   const [bulkImportText, setBulkImportText] = useState(defaultImportText);
 
@@ -198,10 +199,12 @@ export default function Admin() {
       setIsImporting(true);
       setError('');
       setFeedback('');
+      setImportResult(null);
 
       const parsedPayload = JSON.parse(bulkImportText);
       const response = await api.post('/admin/questions/bulk-import', parsedPayload);
 
+      setImportResult(response.data);
       setFeedback(
         `Imported ${response.data.importedCount} question${response.data.importedCount === 1 ? '' : 's'}.`
       );
@@ -215,6 +218,19 @@ export default function Admin() {
     } finally {
       setIsImporting(false);
     }
+  }
+
+  let parsedImportCount = 0;
+
+  try {
+    const parsedPreview = JSON.parse(bulkImportText);
+    parsedImportCount = Array.isArray(parsedPreview)
+      ? parsedPreview.length
+      : Array.isArray(parsedPreview?.questions)
+        ? parsedPreview.questions.length
+        : 0;
+  } catch (_error) {
+    parsedImportCount = 0;
   }
 
   return (
@@ -478,12 +494,50 @@ export default function Admin() {
         </div>
 
         <form className="mt-6 space-y-4" onSubmit={handleBulkImport}>
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-950/40">
+              <p className="text-slate-500 dark:text-slate-400">Detected questions</p>
+              <p className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-50">
+                {parsedImportCount}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-950/40">
+              <p className="text-slate-500 dark:text-slate-400">Required keys</p>
+              <p className="mt-1 font-medium text-slate-900 dark:text-slate-50">
+                text, options, correctAnswer
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-950/40">
+              <p className="text-slate-500 dark:text-slate-400">Image-based field</p>
+              <p className="mt-1 font-medium text-slate-900 dark:text-slate-50">imageUrl</p>
+            </div>
+          </div>
+
           <textarea
             className="min-h-72 w-full rounded-2xl border border-slate-300 bg-slate-950 px-4 py-4 text-sm text-slate-100 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-200 dark:border-slate-700 dark:bg-black dark:text-slate-50 dark:focus:border-teal-400 dark:focus:ring-teal-900"
             onChange={(event) => setBulkImportText(event.target.value)}
             spellCheck={false}
             value={bulkImportText}
           />
+
+          <div className="rounded-2xl border border-dashed border-slate-300 px-4 py-3 text-sm text-slate-600 dark:border-slate-700 dark:text-slate-300">
+            Each imported question must have exactly 4 options, 1 matching correct answer, and an
+            optional `imageUrl`.
+          </div>
+
+          {importResult ? (
+            <div className="grid gap-3 md:grid-cols-3">
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-100">
+                Imported: {importResult.importedCount}
+              </div>
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-100">
+                Skipped: {importResult.skippedCount}
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-950/40 dark:text-slate-200">
+                Returned records: {importResult.questions.length}
+              </div>
+            </div>
+          ) : null}
 
           <div className="flex flex-wrap gap-3">
             <button disabled={isImporting} type="submit">
