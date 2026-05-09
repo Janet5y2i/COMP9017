@@ -24,7 +24,7 @@ int main(int argc, char** argv, char** envp) {
     //after receiving the signal from the client
     struct sigaction sa = {.sa_flags = SA_SIGINFO, .sa_sigaction = signalHandler};
     sigaction(SIGUSR1, &sa, NULL);
-    
+    pause();
 
 
     struct canvas* canvas = animate_create_canvas(100,100,0);
