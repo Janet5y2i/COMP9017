@@ -125,15 +125,53 @@ export async function bulkImportQuestions(req, res, next) {
       return fail(res, error, 400);
     }
 
-    const createdQuestions = await Question.insertMany(data);
+    const seenTexts = new Set();
+    const existingQuestions = await Question.find({
+      text: { $in: data.map((question) => question.text) }
+    }).select('text');
+    const existingTexts = new Set(
+      existingQuestions.map((question) => question.text.trim().toLowerCase())
+    );
+    const skipped = [];
+    const importableQuestions = [];
+
+    data.forEach((question, index) => {
+      const normalizedText = question.text.trim().toLowerCase();
+
+      if (seenTexts.has(normalizedText)) {
+        skipped.push({
+          index,
+          text: question.text,
+          reason: 'Duplicate question text inside the import payload.'
+        });
+        return;
+      }
+
+      if (existingTexts.has(normalizedText)) {
+        skipped.push({
+          index,
+          text: question.text,
+          reason: 'Question text already exists in the database.'
+        });
+        return;
+      }
+
+      seenTexts.add(normalizedText);
+      importableQuestions.push(question);
+    });
+
+    const createdQuestions =
+      importableQuestions.length > 0 ? await Question.insertMany(importableQuestions) : [];
 
     return ok(
       res,
       {
         importedCount: createdQuestions.length,
-        questions: createdQuestions.map(formatQuestion)
+        skippedCount: skipped.length,
+        questions: createdQuestions.map(formatQuestion),
+        skipped
       },
-      201
+      createdQuestions.length > 0 ? 201 : 200
     );
   } catch (error) {
     return next(error);
