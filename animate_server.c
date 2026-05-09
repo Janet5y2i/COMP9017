@@ -4,8 +4,10 @@
 #include <stdio.h>
 #include <signal.h>
 
+
 void signalHandler(int sig, siginfo_t *info, void *ucontext){
     pid_t client_pid = info->si_pid;
+    printf("Signal received from: %d.\n", client_pid);
     kill(client_pid, SIGUSR2);
 }
 
@@ -20,8 +22,8 @@ int main(int argc, char** argv, char** envp) {
     printf("Server PID: %d.\n", pid);
 
     //after receiving the signal from the client
-    struct sigaction sa;
-    signal(SIGUSR1, signalHandler);
+    struct sigaction sa = {.sa_flags = SA_SIGINFO, .sa_sigaction = signalHandler};
+    sigaction(SIGUSR1, &sa, NULL);
     
 
 
