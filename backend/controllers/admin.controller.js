@@ -25,7 +25,21 @@ function isValidQuestionId(id) {
 
 export async function listQuestions(req, res, next) {
   try {
-    const questions = await Question.find().sort({ createdAt: -1 });
+    const filters = {};
+    const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
+    const status = typeof req.query.status === 'string' ? req.query.status.trim() : '';
+
+    if (status === 'active') {
+      filters.isActive = true;
+    } else if (status === 'inactive') {
+      filters.isActive = false;
+    }
+
+    if (search.length > 0) {
+      filters.text = { $regex: search, $options: 'i' };
+    }
+
+    const questions = await Question.find(filters).sort({ createdAt: -1 });
 
     return ok(res, { questions: questions.map(formatQuestion) });
   } catch (error) {
