@@ -77,6 +77,7 @@ export default function Admin() {
 
   const {
     register,
+    watch,
     handleSubmit,
     reset,
     formState: { errors }
@@ -84,6 +85,7 @@ export default function Admin() {
     resolver: zodResolver(questionFormSchema),
     defaultValues: emptyValues
   });
+  const watchedImageUrl = watch('imageUrl');
 
   async function loadQuestions() {
     try {
@@ -475,6 +477,19 @@ export default function Admin() {
                 </p>
               ) : null}
             </label>
+
+            {watchedImageUrl ? (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-950/40">
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                  Image preview
+                </p>
+                <img
+                  alt="Question preview"
+                  className="mt-3 h-40 w-full rounded-2xl border border-slate-200 object-cover dark:border-slate-700"
+                  src={watchedImageUrl}
+                />
+              </div>
+            ) : null}
 
             <div className="grid gap-4">
               {[
