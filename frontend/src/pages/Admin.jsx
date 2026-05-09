@@ -24,6 +24,16 @@ const emptyValues = {
   correctAnswerIndex: 0
 };
 
+const defaultImportText = `[
+  {
+    "text": "Which image format supports transparency?",
+    "options": ["PNG", "JPEG", "BMP", "TIFF"],
+    "correctAnswer": "PNG",
+    "imageUrl": "https://example.com/sample-image.png",
+    "isActive": true
+  }
+]`;
+
 function buildPayload(values) {
   const options = [values.optionA, values.optionB, values.optionC, values.optionD].map((option) =>
     option.trim()
@@ -56,9 +66,11 @@ export default function Admin() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [togglingQuestionId, setTogglingQuestionId] = useState(null);
+  const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState('');
   const [feedback, setFeedback] = useState('');
   const [editingQuestionId, setEditingQuestionId] = useState(null);
+  const [bulkImportText, setBulkImportText] = useState(defaultImportText);
 
   const {
     register,
@@ -176,6 +188,32 @@ export default function Admin() {
       setError(toggleError.message);
     } finally {
       setTogglingQuestionId(null);
+    }
+  }
+
+  async function handleBulkImport(event) {
+    event.preventDefault();
+
+    try {
+      setIsImporting(true);
+      setError('');
+      setFeedback('');
+
+      const parsedPayload = JSON.parse(bulkImportText);
+      const response = await api.post('/admin/questions/bulk-import', parsedPayload);
+
+      setFeedback(
+        `Imported ${response.data.importedCount} question${response.data.importedCount === 1 ? '' : 's'}.`
+      );
+      await loadQuestions();
+    } catch (importError) {
+      if (importError instanceof SyntaxError) {
+        setError('Bulk import JSON is not valid. Please check the format and try again.');
+      } else {
+        setError(importError.message);
+      }
+    } finally {
+      setIsImporting(false);
     }
   }
 
@@ -421,6 +459,39 @@ export default function Admin() {
           </form>
         </section>
       </div>
+
+      <section className="page border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
+        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50">Bulk Import</h2>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              Paste a JSON array of question objects to import multiple image-based questions at once.
+            </p>
+          </div>
+          <button
+            className="button-link secondary"
+            onClick={() => setBulkImportText(defaultImportText)}
+            type="button"
+          >
+            Reset sample
+          </button>
+        </div>
+
+        <form className="mt-6 space-y-4" onSubmit={handleBulkImport}>
+          <textarea
+            className="min-h-72 w-full rounded-2xl border border-slate-300 bg-slate-950 px-4 py-4 text-sm text-slate-100 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-200 dark:border-slate-700 dark:bg-black dark:text-slate-50 dark:focus:border-teal-400 dark:focus:ring-teal-900"
+            onChange={(event) => setBulkImportText(event.target.value)}
+            spellCheck={false}
+            value={bulkImportText}
+          />
+
+          <div className="flex flex-wrap gap-3">
+            <button disabled={isImporting} type="submit">
+              {isImporting ? 'Importing questions...' : 'Import questions'}
+            </button>
+          </div>
+        </form>
+      </section>
     </section>
   );
 }
