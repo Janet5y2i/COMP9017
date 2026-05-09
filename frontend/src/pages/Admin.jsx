@@ -67,6 +67,8 @@ export default function Admin() {
   const [isSaving, setIsSaving] = useState(false);
   const [togglingQuestionId, setTogglingQuestionId] = useState(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [error, setError] = useState('');
   const [feedback, setFeedback] = useState('');
   const [importResult, setImportResult] = useState(null);
@@ -233,6 +235,19 @@ export default function Admin() {
     parsedImportCount = 0;
   }
 
+  const filteredQuestions = questions.filter((question) => {
+    const matchesSearch =
+      searchTerm.trim().length === 0 ||
+      question.text.toLowerCase().includes(searchTerm.trim().toLowerCase());
+
+    const matchesStatus =
+      statusFilter === 'all' ||
+      (statusFilter === 'active' && question.isActive) ||
+      (statusFilter === 'inactive' && !question.isActive);
+
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <section className="space-y-6">
       <div className="page border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
@@ -271,15 +286,33 @@ export default function Admin() {
             </button>
           </div>
 
+          <div className="mt-6 grid gap-3 md:grid-cols-[1fr_200px]">
+            <input
+              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-200 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50 dark:focus:border-teal-400 dark:focus:ring-teal-900"
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Search by question text"
+              value={searchTerm}
+            />
+            <select
+              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-200 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50 dark:focus:border-teal-400 dark:focus:ring-teal-900"
+              onChange={(event) => setStatusFilter(event.target.value)}
+              value={statusFilter}
+            >
+              <option value="all">All statuses</option>
+              <option value="active">Active only</option>
+              <option value="inactive">Inactive only</option>
+            </select>
+          </div>
+
           {isLoading ? (
             <p className="mt-6 text-sm text-slate-500 dark:text-slate-400">Loading questions...</p>
-          ) : questions.length === 0 ? (
+          ) : filteredQuestions.length === 0 ? (
             <div className="mt-6 rounded-2xl border border-dashed border-slate-300 px-5 py-8 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
-              No questions yet. Add your first quiz item from the form.
+              No questions match the current search or filter.
             </div>
           ) : (
             <div className="mt-6 space-y-4">
-              {questions.map((question) => (
+              {filteredQuestions.map((question) => (
                 <article
                   key={question.id}
                   className="rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-700 dark:bg-slate-950/40"
