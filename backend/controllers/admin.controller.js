@@ -1,67 +1,10 @@
 import mongoose from 'mongoose';
-import { z } from 'zod';
 import Question from '../models/Question.js';
+import {
+  normalizeBulkImportPayload,
+  normalizeQuestionInput
+} from '../utils/adminQuestionValidation.js';
 import { fail, ok } from '../utils/envelope.js';
-
-const optionSchema = z
-  .string()
-  .trim()
-  .min(1, 'Each answer option is required.')
-  .max(200, 'Each answer option must be 200 characters or fewer.');
-
-const questionInputSchema = z
-  .object({
-    text: z
-      .string()
-      .trim()
-      .min(10, 'Question text must be at least 10 characters.')
-      .max(500, 'Question text must be 500 characters or fewer.'),
-    options: z.array(optionSchema).length(4, 'A question must have exactly four options.'),
-    correctAnswer: optionSchema,
-    imageUrl: z.union([z.string().trim().url('Image URL must be a valid URL.'), z.literal('')]).optional(),
-    isActive: z.boolean().optional()
-  })
-  .superRefine((value, context) => {
-    const normalizedOptions = value.options.map((option) => option.trim());
-    const uniqueOptions = new Set(normalizedOptions);
-
-    if (uniqueOptions.size !== normalizedOptions.length) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Answer options must be unique.',
-        path: ['options']
-      });
-    }
-
-    if (!normalizedOptions.includes(value.correctAnswer.trim())) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Correct answer must match one of the four options.',
-        path: ['correctAnswer']
-      });
-    }
-  });
-
-function normalizeQuestionInput(payload, mode = 'create') {
-  const parsed = questionInputSchema.safeParse(payload);
-
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message || 'Invalid question payload.' };
-  }
-
-  return {
-    data: {
-      text: parsed.data.text.trim(),
-      options: parsed.data.options.map((option) => option.trim()),
-      correctAnswer: parsed.data.correctAnswer.trim(),
-      imageUrl: parsed.data.imageUrl?.trim() || undefined,
-      ...(mode === 'create' ? { isActive: parsed.data.isActive ?? true } : {}),
-      ...(mode === 'update' && typeof parsed.data.isActive === 'boolean'
-        ? { isActive: parsed.data.isActive }
-        : {})
-    }
-  };
-}
 
 function formatQuestion(question) {
   return {
