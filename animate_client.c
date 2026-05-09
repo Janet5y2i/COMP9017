@@ -6,6 +6,8 @@
 
 int main(int argc, char** argv, char** envp) {
 
+    pid_t client_pid = getpid();
+
     //start from receiving the server's PID, then send a message to the server to indicate that the client is ready to receive the canvas
     if (argc < 2) {
         fprintf(stderr, "Usage: %s <server_pid>\n", argv[0]);
@@ -15,6 +17,7 @@ int main(int argc, char** argv, char** envp) {
     pid_t server_pid = atoi(argv[1]);
     //send aa signal to server(pid = server_pid)
     kill(server_pid, SIGUSR1);
+    wait();
 
 
 
