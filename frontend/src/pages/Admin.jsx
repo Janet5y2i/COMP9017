@@ -247,6 +247,9 @@ export default function Admin() {
 
     return matchesSearch && matchesStatus;
   });
+  const activeCount = questions.filter((question) => question.isActive).length;
+  const inactiveCount = questions.length - activeCount;
+  const imageQuestionCount = questions.filter((question) => Boolean(question.imageUrl)).length;
 
   return (
     <section className="space-y-6">
@@ -266,6 +269,27 @@ export default function Admin() {
           </div>
           <div className="rounded-2xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-900 dark:border-teal-900/80 dark:bg-teal-950/40 dark:text-teal-100">
             {questions.length} question{questions.length === 1 ? '' : 's'} loaded
+          </div>
+        </div>
+
+        <div className="mt-6 grid gap-3 md:grid-cols-3">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 dark:border-slate-700 dark:bg-slate-950/40">
+            <p className="text-sm text-slate-500 dark:text-slate-400">Active questions</p>
+            <p className="mt-2 text-3xl font-semibold text-slate-900 dark:text-slate-50">
+              {activeCount}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 dark:border-slate-700 dark:bg-slate-950/40">
+            <p className="text-sm text-slate-500 dark:text-slate-400">Inactive questions</p>
+            <p className="mt-2 text-3xl font-semibold text-slate-900 dark:text-slate-50">
+              {inactiveCount}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 dark:border-slate-700 dark:bg-slate-950/40">
+            <p className="text-sm text-slate-500 dark:text-slate-400">Image-based questions</p>
+            <p className="mt-2 text-3xl font-semibold text-slate-900 dark:text-slate-50">
+              {imageQuestionCount}
+            </p>
           </div>
         </div>
       </div>
