@@ -119,8 +119,22 @@ export async function toggleQuestion(req, res, next) {
 
 export async function bulkImportQuestions(req, res, next) {
   try {
-    // TODO(admin): parse JSON array, validate each question, insert valid questions.
-    return fail(res, 'TODO: implement bulk import.', 501);
+    const { data, error } = normalizeBulkImportPayload(req.body);
+
+    if (error) {
+      return fail(res, error, 400);
+    }
+
+    const createdQuestions = await Question.insertMany(data);
+
+    return ok(
+      res,
+      {
+        importedCount: createdQuestions.length,
+        questions: createdQuestions.map(formatQuestion)
+      },
+      201
+    );
   } catch (error) {
     return next(error);
   }
