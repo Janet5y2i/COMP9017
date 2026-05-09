@@ -363,14 +363,21 @@ export default function Admin() {
                           {question.text}
                         </h3>
                         {question.imageUrl ? (
-                          <a
-                            className="mt-2 inline-block text-sm font-medium text-teal-700 underline decoration-teal-300 underline-offset-4 dark:text-teal-300"
-                            href={question.imageUrl}
-                            rel="noreferrer"
-                            target="_blank"
-                          >
-                            Open image URL
-                          </a>
+                          <div className="mt-3 flex flex-col gap-3 md:flex-row md:items-start">
+                            <img
+                              alt="Question preview"
+                              className="h-24 w-24 rounded-2xl border border-slate-200 object-cover dark:border-slate-700"
+                              src={question.imageUrl}
+                            />
+                            <a
+                              className="inline-block text-sm font-medium text-teal-700 underline decoration-teal-300 underline-offset-4 dark:text-teal-300"
+                              href={question.imageUrl}
+                              rel="noreferrer"
+                              target="_blank"
+                            >
+                              Open image URL
+                            </a>
+                          </div>
                         ) : null}
                       </div>
 
