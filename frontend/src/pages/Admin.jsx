@@ -590,16 +590,31 @@ export default function Admin() {
           </div>
 
           {importResult ? (
-            <div className="grid gap-3 md:grid-cols-3">
-              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-100">
-                Imported: {importResult.importedCount}
+            <div className="space-y-3">
+              <div className="grid gap-3 md:grid-cols-3">
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-100">
+                  Imported: {importResult.importedCount}
+                </div>
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-100">
+                  Skipped: {importResult.skippedCount}
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-950/40 dark:text-slate-200">
+                  Returned records: {importResult.questions.length}
+                </div>
               </div>
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-100">
-                Skipped: {importResult.skippedCount}
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-950/40 dark:text-slate-200">
-                Returned records: {importResult.questions.length}
-              </div>
+
+              {importResult.skippedCount > 0 ? (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-100">
+                  <p className="font-semibold">Skipped questions</p>
+                  <ul className="mt-3 space-y-2">
+                    {importResult.skipped.map((entry) => (
+                      <li key={`${entry.index}-${entry.text}`}>
+                        #{entry.index + 1}: {entry.text} - {entry.reason}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
             </div>
           ) : null}
 
