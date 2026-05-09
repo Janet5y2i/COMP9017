@@ -24,6 +24,16 @@ const emptyValues = {
   correctAnswerIndex: 0
 };
 
+const defaultImportText = `[
+  {
+    "text": "Which image format supports transparency?",
+    "options": ["PNG", "JPEG", "BMP", "TIFF"],
+    "correctAnswer": "PNG",
+    "imageUrl": "https://example.com/sample-image.png",
+    "isActive": true
+  }
+]`;
+
 function buildPayload(values) {
   const options = [values.optionA, values.optionB, values.optionC, values.optionD].map((option) =>
     option.trim()
@@ -56,12 +66,18 @@ export default function Admin() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [togglingQuestionId, setTogglingQuestionId] = useState(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [error, setError] = useState('');
   const [feedback, setFeedback] = useState('');
+  const [importResult, setImportResult] = useState(null);
   const [editingQuestionId, setEditingQuestionId] = useState(null);
+  const [bulkImportText, setBulkImportText] = useState(defaultImportText);
 
   const {
     register,
+    watch,
     handleSubmit,
     reset,
     formState: { errors }
@@ -69,6 +85,7 @@ export default function Admin() {
     resolver: zodResolver(questionFormSchema),
     defaultValues: emptyValues
   });
+  const watchedImageUrl = watch('imageUrl');
 
   async function loadQuestions() {
     try {
@@ -179,6 +196,63 @@ export default function Admin() {
     }
   }
 
+  async function handleBulkImport(event) {
+    event.preventDefault();
+
+    try {
+      setIsImporting(true);
+      setError('');
+      setFeedback('');
+      setImportResult(null);
+
+      const parsedPayload = JSON.parse(bulkImportText);
+      const response = await api.post('/admin/questions/bulk-import', parsedPayload);
+
+      setImportResult(response.data);
+      setFeedback(
+        `Imported ${response.data.importedCount} question${response.data.importedCount === 1 ? '' : 's'}.`
+      );
+      await loadQuestions();
+    } catch (importError) {
+      if (importError instanceof SyntaxError) {
+        setError('Bulk import JSON is not valid. Please check the format and try again.');
+      } else {
+        setError(importError.message);
+      }
+    } finally {
+      setIsImporting(false);
+    }
+  }
+
+  let parsedImportCount = 0;
+
+  try {
+    const parsedPreview = JSON.parse(bulkImportText);
+    parsedImportCount = Array.isArray(parsedPreview)
+      ? parsedPreview.length
+      : Array.isArray(parsedPreview?.questions)
+        ? parsedPreview.questions.length
+        : 0;
+  } catch (_error) {
+    parsedImportCount = 0;
+  }
+
+  const filteredQuestions = questions.filter((question) => {
+    const matchesSearch =
+      searchTerm.trim().length === 0 ||
+      question.text.toLowerCase().includes(searchTerm.trim().toLowerCase());
+
+    const matchesStatus =
+      statusFilter === 'all' ||
+      (statusFilter === 'active' && question.isActive) ||
+      (statusFilter === 'inactive' && !question.isActive);
+
+    return matchesSearch && matchesStatus;
+  });
+  const activeCount = questions.filter((question) => question.isActive).length;
+  const inactiveCount = questions.length - activeCount;
+  const imageQuestionCount = questions.filter((question) => Boolean(question.imageUrl)).length;
+
   return (
     <section className="space-y-6">
       <div className="page border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
@@ -199,6 +273,27 @@ export default function Admin() {
             {questions.length} question{questions.length === 1 ? '' : 's'} loaded
           </div>
         </div>
+
+        <div className="mt-6 grid gap-3 md:grid-cols-3">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 dark:border-slate-700 dark:bg-slate-950/40">
+            <p className="text-sm text-slate-500 dark:text-slate-400">Active questions</p>
+            <p className="mt-2 text-3xl font-semibold text-slate-900 dark:text-slate-50">
+              {activeCount}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 dark:border-slate-700 dark:bg-slate-950/40">
+            <p className="text-sm text-slate-500 dark:text-slate-400">Inactive questions</p>
+            <p className="mt-2 text-3xl font-semibold text-slate-900 dark:text-slate-50">
+              {inactiveCount}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 dark:border-slate-700 dark:bg-slate-950/40">
+            <p className="text-sm text-slate-500 dark:text-slate-400">Image-based questions</p>
+            <p className="mt-2 text-3xl font-semibold text-slate-900 dark:text-slate-50">
+              {imageQuestionCount}
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
@@ -217,15 +312,33 @@ export default function Admin() {
             </button>
           </div>
 
+          <div className="mt-6 grid gap-3 md:grid-cols-[1fr_200px]">
+            <input
+              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-200 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50 dark:focus:border-teal-400 dark:focus:ring-teal-900"
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Search by question text"
+              value={searchTerm}
+            />
+            <select
+              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-200 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50 dark:focus:border-teal-400 dark:focus:ring-teal-900"
+              onChange={(event) => setStatusFilter(event.target.value)}
+              value={statusFilter}
+            >
+              <option value="all">All statuses</option>
+              <option value="active">Active only</option>
+              <option value="inactive">Inactive only</option>
+            </select>
+          </div>
+
           {isLoading ? (
             <p className="mt-6 text-sm text-slate-500 dark:text-slate-400">Loading questions...</p>
-          ) : questions.length === 0 ? (
+          ) : filteredQuestions.length === 0 ? (
             <div className="mt-6 rounded-2xl border border-dashed border-slate-300 px-5 py-8 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
-              No questions yet. Add your first quiz item from the form.
+              No questions match the current search or filter.
             </div>
           ) : (
             <div className="mt-6 space-y-4">
-              {questions.map((question) => (
+              {filteredQuestions.map((question) => (
                 <article
                   key={question.id}
                   className="rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-700 dark:bg-slate-950/40"
@@ -252,14 +365,21 @@ export default function Admin() {
                           {question.text}
                         </h3>
                         {question.imageUrl ? (
-                          <a
-                            className="mt-2 inline-block text-sm font-medium text-teal-700 underline decoration-teal-300 underline-offset-4 dark:text-teal-300"
-                            href={question.imageUrl}
-                            rel="noreferrer"
-                            target="_blank"
-                          >
-                            Open image URL
-                          </a>
+                          <div className="mt-3 flex flex-col gap-3 md:flex-row md:items-start">
+                            <img
+                              alt="Question preview"
+                              className="h-24 w-24 rounded-2xl border border-slate-200 object-cover dark:border-slate-700"
+                              src={question.imageUrl}
+                            />
+                            <a
+                              className="inline-block text-sm font-medium text-teal-700 underline decoration-teal-300 underline-offset-4 dark:text-teal-300"
+                              href={question.imageUrl}
+                              rel="noreferrer"
+                              target="_blank"
+                            >
+                              Open image URL
+                            </a>
+                          </div>
                         ) : null}
                       </div>
 
@@ -358,6 +478,19 @@ export default function Admin() {
               ) : null}
             </label>
 
+            {watchedImageUrl ? (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-950/40">
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                  Image preview
+                </p>
+                <img
+                  alt="Question preview"
+                  className="mt-3 h-40 w-full rounded-2xl border border-slate-200 object-cover dark:border-slate-700"
+                  src={watchedImageUrl}
+                />
+              </div>
+            ) : null}
+
             <div className="grid gap-4">
               {[
                 ['optionA', 'Option A'],
@@ -421,6 +554,92 @@ export default function Admin() {
           </form>
         </section>
       </div>
+
+      <section className="page border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
+        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50">Bulk Import</h2>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              Paste a JSON array of question objects to import multiple image-based questions at once.
+            </p>
+          </div>
+          <button
+            className="button-link secondary"
+            onClick={() => setBulkImportText(defaultImportText)}
+            type="button"
+          >
+            Reset sample
+          </button>
+        </div>
+
+        <form className="mt-6 space-y-4" onSubmit={handleBulkImport}>
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-950/40">
+              <p className="text-slate-500 dark:text-slate-400">Detected questions</p>
+              <p className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-50">
+                {parsedImportCount}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-950/40">
+              <p className="text-slate-500 dark:text-slate-400">Required keys</p>
+              <p className="mt-1 font-medium text-slate-900 dark:text-slate-50">
+                text, options, correctAnswer
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-950/40">
+              <p className="text-slate-500 dark:text-slate-400">Image-based field</p>
+              <p className="mt-1 font-medium text-slate-900 dark:text-slate-50">imageUrl</p>
+            </div>
+          </div>
+
+          <textarea
+            className="min-h-72 w-full rounded-2xl border border-slate-300 bg-slate-950 px-4 py-4 text-sm text-slate-100 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-200 dark:border-slate-700 dark:bg-black dark:text-slate-50 dark:focus:border-teal-400 dark:focus:ring-teal-900"
+            onChange={(event) => setBulkImportText(event.target.value)}
+            spellCheck={false}
+            value={bulkImportText}
+          />
+
+          <div className="rounded-2xl border border-dashed border-slate-300 px-4 py-3 text-sm text-slate-600 dark:border-slate-700 dark:text-slate-300">
+            Each imported question must have exactly 4 options, 1 matching correct answer, and an
+            optional `imageUrl`.
+          </div>
+
+          {importResult ? (
+            <div className="space-y-3">
+              <div className="grid gap-3 md:grid-cols-3">
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-100">
+                  Imported: {importResult.importedCount}
+                </div>
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-100">
+                  Skipped: {importResult.skippedCount}
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-950/40 dark:text-slate-200">
+                  Returned records: {importResult.questions.length}
+                </div>
+              </div>
+
+              {importResult.skippedCount > 0 ? (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-100">
+                  <p className="font-semibold">Skipped questions</p>
+                  <ul className="mt-3 space-y-2">
+                    {importResult.skipped.map((entry) => (
+                      <li key={`${entry.index}-${entry.text}`}>
+                        #{entry.index + 1}: {entry.text} - {entry.reason}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          <div className="flex flex-wrap gap-3">
+            <button disabled={isImporting} type="submit">
+              {isImporting ? 'Importing questions...' : 'Import questions'}
+            </button>
+          </div>
+        </form>
+      </section>
     </section>
   );
 }

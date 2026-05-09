@@ -138,6 +138,33 @@ or:
 { "success": false, "error": "Message" }
 ```
 
+## Admin Import Format
+
+The admin bulk import panel accepts either a raw JSON array or an object with a `questions` array.
+
+Example:
+
+```json
+[
+  {
+    "text": "Which image format supports transparency?",
+    "options": ["PNG", "JPEG", "BMP", "TIFF"],
+    "correctAnswer": "PNG",
+    "imageUrl": "https://example.com/sample-image.png",
+    "isActive": true
+  }
+]
+```
+
+Validation rules:
+
+- Each question must include `text`, `options`, and `correctAnswer`
+- `options` must contain exactly 4 unique values
+- `correctAnswer` must match one of the 4 options
+- `imageUrl` is optional but should be provided for image-based questions
+- Duplicate question text in the same import payload is skipped
+- Question text that already exists in the database is skipped
+
 ## Feature TODO List
 
 | Feature | Backend Files | Frontend Files | Owner |
@@ -146,8 +173,8 @@ or:
 | Player quiz flow | `quiz.controller.js`, `Question.js`, `Score.js` | `Quiz.jsx`, `QuizContext.jsx` | TODO |
 | Attempts history | `quiz.controller.js`, `Score.js` | `Attempts.jsx` | TODO |
 | Leaderboard | `quiz.controller.js`, `Score.js`, `User.js` | `Leaderboard.jsx` | TODO |
-| Admin question CRUD | `admin.controller.js`, `Question.js`, `admin.routes.js` | `Admin.jsx` | TODO |
-| Admin bulk import | `admin.controller.js` | `Admin.jsx` | TODO |
+| Admin question CRUD | `admin.controller.js`, `Question.js`, `admin.routes.js` | `Admin.jsx` | In progress |
+| Admin bulk import | `admin.controller.js` | `Admin.jsx` | In progress |
 | Approved variation | `Question.js`, `Score.js`, relevant controllers | `Quiz.jsx`, `Admin.jsx`, relevant views | TODO |
 | Validation/security hardening | controllers, middleware | all form pages | TODO |
 | Documentation/API docs | `docs/api/openapi.todo.yaml` | README | TODO |
@@ -180,4 +207,3 @@ or:
 ## Demo Notes
 
 Each team member must be ready to explain both their own subsystem and the overall database/API/frontend flow. Prepare edge cases such as invalid login, inactive questions, malformed bulk import JSON, duplicate users, too few active questions, and quiz resubmission attempts.
-
