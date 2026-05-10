@@ -91,14 +91,26 @@ export async function submitQuiz(req, res, next) {
 export async function getMyAttempts(req, res, next) {
   try {
     // TODO Get the authenticated user
-    const userId = "69f9f7bdd0a45f8c2ef202c3";
+    const userId = "69faf93ae00a5dec5c874a13";
     const user = await User.findById(userId);
 
     // Find all scores of the player, sorted by timestamp
-    const scores = await Score.find({ userId: user._id }).sort({ createdAt: -1 });
+    const scores = await Score
+      .find({ userId: user._id })
+      .sort({ createdAt: -1 })
+      .select({
+        answers: 0,
+        userId: 0
+      });
+    
+    // Return user details with score history
+    const data = {
+      user: user,
+      scores: scores
+    };
 
     // Return the list of attempts
-    return ok(res, scores, 200);
+    return ok(res, data, 200);
   } catch (error) {
     return next(error);
   }
