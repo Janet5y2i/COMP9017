@@ -38,7 +38,7 @@ export default function Register() {
         <div>
           <span claclassNamess="input-group-text">Email: </span>
           <input type="email"
-          className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+          className="appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-colors"
           aria-label="Email"
           aria-describedby="visible-addon" {...register('email')} />
           {errors.email && <p className="mt-1 text-xs text-red-600 font-medium">{errors.email.message}</p>}
@@ -47,7 +47,7 @@ export default function Register() {
         <div>
           <span className="input-group-text">Username: </span>
           <input type="text"
-          className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+          className="appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-colors"
           aria-label="Username"
           aria-describedby="visible-addon" {...register('username')} />
           {errors.username && <p className="mt-1 text-xs text-red-600 font-medium">{errors.username.message}</p>}
@@ -57,7 +57,7 @@ export default function Register() {
         <div>
           <span className="input-group-text">Password: </span>
           <input type="password"
-          className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+          className="appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-colors"
           aria-label="Password"
           aria-describedby="visible-addon" {...register('password')} />
           {errors.password && <p className="mt-1 text-xs text-red-600 font-medium">{errors.password.message}</p>}
