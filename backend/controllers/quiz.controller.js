@@ -91,11 +91,16 @@ export async function submitQuiz(req, res, next) {
 export async function getMyAttempts(req, res, next) {
   try {
     // TODO Get the authenticated user
-    const userId = "69f9f7bdd0a45f8c2ef202c3";
-    const user = await User.findById(userId);
+    const userId = req.user._id || req.user.id;
+    if (!userId) {
+      return fail(res, "User not authenticated", 401);
+    }
+
+
+
 
     // Find all scores of the player, sorted by timestamp
-    const scores = await Score.find({ userId: user._id }).sort({ createdAt: -1 });
+    const scores = await Score.find({ userId: userId }).sort({ createdAt: -1 });
 
     // Return the list of attempts
     return ok(res, scores, 200);
