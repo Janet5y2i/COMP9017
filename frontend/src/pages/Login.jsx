@@ -39,8 +39,13 @@ export default function Login() {
   };
 
   return (
+    <>
+    
     <section className="page narrow">
-      <h1>Login</h1>
+      <div className="text-center w-full max-w-md">
+        <h1 className="text-4xl font-bold text-center mb-8 text-accent">Login</h1>
+      </div>
+      
       <form onSubmit={handleSubmit(onSubmit)} className="form">
           <div>
             <span className="input-group-text">Email: </span>
@@ -63,13 +68,14 @@ export default function Login() {
 
         <div>
           <button type="button" onClick={ () => window.location.href = '/register'}
-          className="w-full flex justify-center py-2 px-4 !border !border-indigo-600 text-sm font-medium rounded-md !text-indigo-600 !bg-transparent hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200 mt-4">
+          className="w-full flex justify-center py-2 px-4 mt-4 text-sm font-medium rounded-md transition-all duration-200 border-2! border-accent! bg-transparent! text-accent! hover:bg-accent! hover:text-accent-contrast!">
           Register
           </button>
         </div>
         
       </form> 
     </section>
+    </>
   );
 }
 
