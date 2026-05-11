@@ -30,22 +30,24 @@ export default function Register() {
 
   return (
     <section className="page narrow">
-      <h1>Register</h1>
+      <div className="text-center w-full max-w-md">
+        <h1 className="text-4xl font-bold text-center mb-8 text-accent">Register</h1>
+      </div>
       <form onSubmit={handleSubmit(onSubmit)} className="form">
         {/* Email field */}
         <div>
-          <span class="input-group-text">Email: </span>
+          <span claclassNamess="input-group-text">Email: </span>
           <input type="email"
-          class="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+          className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
           aria-label="Email"
           aria-describedby="visible-addon" {...register('email')} />
           {errors.email && <p className="mt-1 text-xs text-red-600 font-medium">{errors.email.message}</p>}
         </div>
         {/* Username field */}
         <div>
-          <span class="input-group-text">Username: </span>
+          <span className="input-group-text">Username: </span>
           <input type="text"
-          class="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+          className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
           aria-label="Username"
           aria-describedby="visible-addon" {...register('username')} />
           {errors.username && <p className="mt-1 text-xs text-red-600 font-medium">{errors.username.message}</p>}
@@ -53,9 +55,9 @@ export default function Register() {
 
         {/* Password field */}
         <div>
-          <span class="input-group-text">Password: </span>
+          <span className="input-group-text">Password: </span>
           <input type="password"
-          class="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+          className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
           aria-label="Password"
           aria-describedby="visible-addon" {...register('password')} />
           {errors.password && <p className="mt-1 text-xs text-red-600 font-medium">{errors.password.message}</p>}
@@ -63,13 +65,13 @@ export default function Register() {
 
         {/* Register role: default to player, only allow admin if explicitly selected (for testing purposes) */}
         <div>
-          <span class="input-group-text">Role: </span>
+          <span className="input-group-text">Role: </span>
           <select
-            class="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+            className="appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-colors"
             {...register('role')}
             >
-              <option value="player">Player</option>
-              <option value="admin">Admin</option>
+              <option value="player" className = "text-gray-900 dark:text-white bg-white dark:bg-gray-800">Player</option>
+              <option value="admin" className = "text-gray-900 dark:text-white bg-white dark:bg-gray-800">Admin</option>
             </select>
         </div>
         <button type="submit"
