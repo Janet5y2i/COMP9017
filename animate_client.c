@@ -4,14 +4,15 @@
 #include <signal.h>
 
 volatile sig_atomic_t flag = 0;
-void signalHandler(int sig){
-    printf("signal received: %d.\n", sig);
+void signalHandler(int sig, siginfo_t *info, void *ucontext){
+    pid_t server_pid = info->si_pid;
+    printf("signal received from: %d.\n", server_pid);
     flag = 1;
 
 }
 
 
-int main(int argc, char** argv, char** envp) {
+int main(iœnt argc, char** argv, char** envp) {
 
     pid_t client_pid = getpid();
 
@@ -27,11 +28,15 @@ int main(int argc, char** argv, char** envp) {
     //send a signal to server(pid = server_pid)
     kill(server_pid, SIGUSR1);
 
-    struct sigaction sa = {.sa_flags = SA_SIGINFO, .sa_sigaction = NULL, .sa_flags = 0};
+
+    struct sigaction sa = {.sa_flags = SA_SIGINFO, .sa_sigaction = signalHandler};
     sigset_t new_mask, old_mask, wait_mask;
+    //empty the structure
     sigemptyset(&sa.sa_mask);
 
-    
+    sigaction(SIGUSR2, &sa, NULL);
+
+/*
     if (sigaction(SIGUSR2, &sa, NULL) == -1) {
         perror("sigaction");
         return 1;
@@ -64,7 +69,7 @@ int main(int argc, char** argv, char** envp) {
     }
 
     printf("Exiting...\n");
-
+*/
 
     return 0;
 }
