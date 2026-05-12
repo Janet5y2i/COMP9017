@@ -105,7 +105,7 @@ export default function Attempts() {
                 {score.time.toLocaleString('en-au')}
               </span>
             </li>
-          ))}
+          ))}œ
         </ul>
       </section>
     );
