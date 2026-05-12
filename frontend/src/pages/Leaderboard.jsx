@@ -27,23 +27,29 @@ export default function Leaderboard() {
       </h1>
 
       {data ?
-        <ul className='w-full text-center'>
+        data.length > 0 ?
+          <ul className='w-full text-center'>
 
 
-          <li className='w-full font-bold mt-3 mb-5'>
-            <span className='w-[15%] inline-block'>Rank</span>
-            <span className='w-[65%] inline-block'>Username</span>
-            <span className='w-[20%] inline-block'>Highest Score Achieved</span>
-          </li>
-
-          {data.map((entry, index) => (
-            <li key={`user${index}`} className='w-full bg-line py-4 my-3 rounded-xl shadow transform-anim hover:scale-x-102 hover:scale-y-105 hover:font-bold'>
-              <span className='w-[15%] inline-block'>{index + 1}</span>
-              <span className='w-[65%] inline-block'>{entry.user.username}</span>
-              <span className='w-[20%] inline-block'>{entry.maxUserScore}</span>
+            <li className='w-full font-bold mt-3 mb-5'>
+              <span className='w-[15%] inline-block'>Rank</span>
+              <span className='w-[65%] inline-block'>Username</span>
+              <span className='w-[20%] inline-block'>Highest Score Achieved</span>
             </li>
-          ))}
-        </ul> :
+
+            {data.map((entry, index) => (
+              <li key={`user${index}`} className='w-full bg-line py-4 my-3 rounded-xl shadow transform-anim hover:scale-x-102 hover:scale-y-105 hover:font-bold'>
+                <span className='w-[15%] inline-block'>{index + 1}</span>
+                <span className='w-[65%] inline-block'>{entry.user.username}</span>
+                <span className='w-[20%] inline-block'>{entry.maxUserScore}</span>
+              </li>
+            ))}
+          </ul> :
+
+          // No user has played -> No leaderboard data
+          <div className='my-5'>
+            <p>No user has attempted the quiz. Maybe you can be the first to try?</p>
+          </div> :
 
         // Error case, cannot get leaderboard data
         <LoadingSpinner size={"10"} />
