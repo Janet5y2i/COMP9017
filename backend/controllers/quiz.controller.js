@@ -103,7 +103,7 @@ export async function getMyAttempts(req, res, next) {
     const scores = await Score.find({ userId: userId }).sort({ createdAt: -1 });
 
     // Return the list of attempts
-    return ok(res, scores, 200);
+    return ok(res, data, 200);
   } catch (error) {
     return next(error);
   }
