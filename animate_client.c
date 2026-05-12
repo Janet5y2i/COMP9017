@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #define BUFF 1024
 
@@ -13,20 +15,8 @@ volatile sig_atomic_t flag = 0;
 //when receiving sigusr2, update flag and open fifo
 void signalHandler(int sig, siginfo_t *info, void *ucontext){
     pid_t server_pid = info->si_pid;
-    pid_t client_pid = getpid();
     printf("signal received from: %d.\n", server_pid);
     flag = 1;
-
-     //set FIFO path by id   
-    char path_c2s[BUFF];
-    char path_s2c[BUFF];
-
-    sprintf(path_c2s, "FIFO_C2S_%d", client_pid);
-    sprintf(path_s2c, "FIFO_S2C_%d", client_pid);
-
-    //open fifo
-    int fd_c2s = open(path_c2s, O_WRONLY);
-    int fd_s2c = open(path_s2c, O_RDONLY);
 
 }
 
@@ -72,6 +62,17 @@ int main(int argc, char** argv, char** envp) {
     }
 
     sigprocmask(SIG_SETMASK, &old_mask, NULL);
+
+     //set FIFO path by id   
+    char path_c2s[BUFF];
+    char path_s2c[BUFF];
+
+    sprintf(path_c2s, "FIFO_C2S_%d", client_pid);
+    sprintf(path_s2c, "FIFO_S2C_%d", client_pid);
+
+    //open fifo
+    int fd_c2s = open(path_c2s, O_WRONLY);
+    int fd_s2c = open(path_s2c, O_RDONLY);
 
     return 0;
 }
