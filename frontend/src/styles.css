@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* To be able to toggle dark/light theme using a class for the html tag */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   color-scheme: light;
   --bg: #f7f7f4;
