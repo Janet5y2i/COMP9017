@@ -43,6 +43,7 @@ void signalHandler(int sig, siginfo_t *info, void *ucontext){
     //make FIFO
 
     kill(client_pid, SIGUSR2);
+
 }
 
 int main(int argc, char** argv, char** envp) {
@@ -68,10 +69,13 @@ int main(int argc, char** argv, char** envp) {
     //receiving sigusr1 from client,  send FIFO and sigusrs to client
     sigaction(SIGUSR1, &sa, NULL);
     
-    
-    //prevent the code end before receiving reply
 
-    while(1){   
+    //prevent the code end before receiving reply
+    char req[BUFF];
+    while(1){
+        if (read(res_s2c,req,sizeof(req)) != NULL){
+            
+        }
         pause();
     }
 
