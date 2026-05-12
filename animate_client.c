@@ -2,12 +2,31 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <fcntl.h>
 
+#define BUFF 1024
+
+
+//initialize the flag
 volatile sig_atomic_t flag = 0;
+
+//when receiving sigusr2, update flag and open fifo
 void signalHandler(int sig, siginfo_t *info, void *ucontext){
     pid_t server_pid = info->si_pid;
+    pid_t client_pid = getpid();
     printf("signal received from: %d.\n", server_pid);
     flag = 1;
+
+     //set FIFO path by id   
+    char path_c2s[BUFF];
+    char path_s2c[BUFF];
+
+    sprintf(path_c2s, "FIFO_C2S_%d", client_pid);
+    sprintf(path_s2c, "FIFO_S2C_%d", client_pid);
+
+    //open fifo
+    int fd_c2s = open(path_c2s, O_WRONLY);
+    int fd_s2c = open(path_s2c, O_RDONLY);
 
 }
 
@@ -39,19 +58,20 @@ int main(int argc, char** argv, char** envp) {
     /*add new_mask sig as block list, and save the original
     one to the old_mask set*/
     sigprocmask(SIG_BLOCK, &new_mask, &old_mask);
+    sigaction(SIGUSR2, &sa, NULL);
 
     //first send sigusr1 to server
     kill(server_pid, SIGUSR1);
 
     //third wait for sigusr2 receving SIDUSR2, execute the handler
-    sigaction(SIGUSR2, &sa, NULL);
-    sigemptyset(&wait_mask)
+    
+    sigemptyset(&wait_mask);
 
     while (flag == 0){
         sigsuspend(&wait_mask);
     }
 
-    sigprocmask(SIG_SETMASK, &oldmask, NULL);
+    sigprocmask(SIG_SETMASK, &old_mask, NULL);
 
     return 0;
 }
