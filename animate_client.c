@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <string.h>
 
 #define BUFF 1024
 
@@ -61,6 +62,7 @@ int main(int argc, char** argv, char** envp) {
         sigsuspend(&wait_mask);
     }
 
+    //reset the mask
     sigprocmask(SIG_SETMASK, &old_mask, NULL);
 
      //set FIFO path by id   
@@ -71,8 +73,15 @@ int main(int argc, char** argv, char** envp) {
     sprintf(path_s2c, "FIFO_S2C_%d", client_pid);
 
     //open fifo
-    int fd_c2s = open(path_c2s, O_WRONLY);
-    int fd_s2c = open(path_s2c, O_RDONLY);
+    int fd_c2s = open(path_c2s, O_WRONLY); //write only
+    int fd_s2c = open(path_s2c, O_RDONLY); //read only
 
+    //send login message to server
+    char req[BUFF];
+    fgets(req, BUFF, stdin);
+
+    if (strstr(req, "Login") != NULL){
+        write(fd_c2s, req, sizeof(req));
+    }
     return 0;
 }
