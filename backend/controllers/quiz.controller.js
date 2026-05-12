@@ -44,12 +44,14 @@ const QuizAnswer = z.object({
 
 export async function submitQuiz(req, res, next) {
   try {
+    // Get the authenticated user
+    const user = req.user;
+    if (!user) {
+      return fail(res, "User not authenticated", 401);
+    }
+
     // Validate response body
     const qAns = QuizAnswer.parse(req.body);
-
-    // TODO Get the authenticated user
-    const userId = "69faf93ae00a5dec5c874a13";
-    const user = await User.findById(userId);
 
     // Calculate score
     let answers = [];
@@ -90,17 +92,25 @@ export async function submitQuiz(req, res, next) {
 
 export async function getMyAttempts(req, res, next) {
   try {
-    // TODO Get the authenticated user
-    const userId = req.user._id || req.user.id;
-    if (!userId) {
+    // Get the authenticated user
+    const user = req.user;
+    if (!user) {
       return fail(res, "User not authenticated", 401);
     }
 
-
-
-
     // Find all scores of the player, sorted by timestamp
-    const scores = await Score.find({ userId: userId }).sort({ createdAt: -1 });
+    const scores = await Score
+      .find({ userId: user._id })
+      .sort({ createdAt: -1 })
+      .select({
+        userId: 0
+      });
+    
+    // Return user details with score history
+    const data = {
+      user: user,
+      scores: scores
+    };
 
     // Return the list of attempts
     return ok(res, data, 200);

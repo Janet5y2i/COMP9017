@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faAngleDown, faAngleUp, faSquarePollVertical } from '@fortawesome/free-solid-svg-icons';
-import { faCircleCheck, faCircleXmark } from '@fortawesome/free-regular-svg-icons';
 import Confetti from 'react-confetti';
+import QuizAnswerResultList from './QuizAnswerResultList';
 
 export default function QuizResult({ result }) {
   const [showAnswer, setShowAnswer] = useState(false);
@@ -31,20 +31,8 @@ export default function QuizResult({ result }) {
         <p>Show result per question</p>
         <FontAwesomeIcon icon={showAnswer ? faAngleDown : faAngleUp} />
       </div>
-
-      <ul hidden={!showAnswer} className='w-full px-5 mt-2 bg-line py-5 rounded-xl'>
-        {result.answers.map((answer, index) => (
-          <li key={`q${index}`} className='flex my-3 items-center'>
-            <p className='font-bold'>Question {index + 1} </p>
-            <div className='grow border-b border-dashed mx-2 h-3'></div>
-            <FontAwesomeIcon
-              icon={answer.isCorrect ? faCircleCheck : faCircleXmark}
-              className={`text-lg ${answer.isCorrect ? "text-green-600" : "text-red-600"}`}
-            />
-          </li>
-        ))}
-      </ul>
-
+      <QuizAnswerResultList hidden={!showAnswer} answers={result.answers} />
+      
     </div>
   );
 }
