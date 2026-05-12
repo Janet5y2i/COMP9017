@@ -70,6 +70,8 @@ export default function Quiz() {
     );
   }
   else if (0 <= quizIdx && quizIdx < questions.length && !result) {
+    // This case is only true after the data from the server arrive,
+    // which will cause the callback to set quizIdx to 0.
 
     return (
       <section className="page">
