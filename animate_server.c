@@ -13,21 +13,39 @@ void signalHandler(int sig, siginfo_t *info, void *ucontext){
 
 int main(int argc, char** argv, char** envp) {
     if (argc < 2) {
-        fprintf(stderr, "Usage: %s <port>\n", argv[0]);
+        fprintf(stderr, "Usage: %s <threadpool size>\n", argv[0]);
         return 1;
     }
+
+    //create the canvas
+    struct canvas* canvas = animate_create_canvas(100,100,0);
 
     //get server pid
     pid_t pid = getpid();
     printf("Server PID: %d.\n", pid);
 
-    //after receiving the signal from the client
-    struct sigaction sa = {.sa_flags = SA_SIGINFO, .sa_sigaction = signalHandler};
+    //third: after receiving the signal from the client
+    struct sigaction sa;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_SIGINFO;
+    sa.sa_sigaction = signalHandler;
+
+
+    //first, send sigusr1 to client
     sigaction(SIGUSR1, &sa, NULL);
-    pause();
+    
+    
+    
 
 
-    struct canvas* canvas = animate_create_canvas(100,100,0);
+    
+    
+    //prevent the code end before receiving reply
+
+    while(1){   
+        pause();
+    }
+
     animate_destroy_canvas(canvas);
     
     return 0;

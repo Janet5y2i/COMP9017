@@ -12,11 +12,11 @@ void signalHandler(int sig, siginfo_t *info, void *ucontext){
 }
 
 
-int main(iœnt argc, char** argv, char** envp) {
+int main(int argc, char** argv, char** envp) {
 
     pid_t client_pid = getpid();
 
-    signal(SIGUSR2, signalHandler);
+    //signal(SIGUSR2, signalHandler);
 
     //start from receiving the server's PID, then send a message to the server to indicate that the client is ready to receive the canvas
     if (argc < 2) {
@@ -25,51 +25,33 @@ int main(iœnt argc, char** argv, char** envp) {
     }
 
     pid_t server_pid = atoi(argv[1]);
-    //send a signal to server(pid = server_pid)
-    kill(server_pid, SIGUSR1);
-
-
-    struct sigaction sa = {.sa_flags = SA_SIGINFO, .sa_sigaction = signalHandler};
+    //second: send a signal to server(pid = server_pid)
     sigset_t new_mask, old_mask, wait_mask;
+    struct sigaction sa;
     //empty the structure
     sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_SIGINFO;
+    sa.sa_sigaction = signalHandler;
+    
 
-    sigaction(SIGUSR2, &sa, NULL);
-
-/*
-    if (sigaction(SIGUSR2, &sa, NULL) == -1) {
-        perror("sigaction");
-        return 1;
-    };
-
-    // initialize signalset
     sigemptyset(&new_mask);
     sigaddset(&new_mask, SIGUSR2);
+    /*add new_mask sig as block list, and save the original
+    one to the old_mask set*/
+    sigprocmask(SIG_BLOCK, &new_mask, &old_mask);
 
-    // block sigusr2
-    if (sigprocmask(SIG_BLOCK, &new_mask, &old_mask) == -1){
-        perror("sigprocmask");
-        return 1;
+    //first send sigusr1 to server
+    kill(server_pid, SIGUSR1);
+
+    //third wait for sigusr2 receving SIDUSR2, execute the handler
+    sigaction(SIGUSR2, &sa, NULL);
+    sigemptyset(&wait_mask)
+
+    while (flag == 0){
+        sigsuspend(&wait_mask);
     }
 
-    // initialize waiting signal set
-    sigemptyset(&wait_mask);
-    printf("Waiting for SIGUSR2...\n");
-
-    while(!flag){
-        if (sigsuspend(&wait_mask) != -1){
-            perror("sigsuspend");
-            return 1;
-        }
-    }
-
-    if (sigprocmask(SIG_SETMASK, &old_mask, NULL) == -1) {
-        perror("sigprocmask");
-        return 1;
-    }
-
-    printf("Exiting...\n");
-*/
+    sigprocmask(SIG_SETMASK, &oldmask, NULL);
 
     return 0;
 }
