@@ -3,6 +3,7 @@ import quiz_api from "../api/quiz_api";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBook, faAngleUp, faAngleDown } from "@fortawesome/free-solid-svg-icons";
 import LoadingSpinner from "../components/LoadingSpinner";
+import QuizAnswerResultList from "../components/QuizAnswerResultList";
 
 // Custom enum to keep track of current history order
 const ScoreOrder = {
@@ -10,6 +11,31 @@ const ScoreOrder = {
   SCORE_DESC: 1,
   TIME_ASC: 2,
   TIME_DESC: 3,
+}
+
+function ScoreEntry({ score }) {
+  const [showAnswer, setShowAnswer] = useState(false);
+
+  return (
+    <li
+      className={`w-full bg-line py-4 my-3 rounded-xl shadow flex items-center flex-wrap transform-anim hover:scale-102 hover:font-bold active:shaded ${showAnswer ? 'shaded' : ''}`}
+      onClick={() => setShowAnswer(!showAnswer)}
+    >
+      <span className='w-[30%] inline-block'>{score.score}</span>
+      <span className='w-[60%] inline-block relative'>
+        {score.time.toLocaleString('en-au')}
+      </span>
+      <span className="w-[10%] tex-center">
+        <FontAwesomeIcon icon={showAnswer ? faAngleUp : faAngleDown} />
+      </span>
+
+      <div className="mx-5 mt-5 w-full" hidden={!showAnswer}>
+        <h3 className="text-xl font-bold">Details</h3>
+        <QuizAnswerResultList answers={score.answers} />
+
+      </div>
+    </li>
+  )
 }
 
 export default function Attempts() {
@@ -55,6 +81,7 @@ export default function Attempts() {
         setUser(res.user);
         setScores(res.scores.map(score => ({
           score: score.score,
+          answers: score.answers,
           time: new Date(Date.parse(score.createdAt)),
         })));
       })
@@ -80,7 +107,7 @@ export default function Attempts() {
 
         <ul className="w-full text-center my-3">
           <li className='w-full font-bold mt-3 mb-3'>
-            <span className='w-[35%] inline-block transform-anim hover:bg-line py-1 rounded-lg active:shaded' onClick={() => changeOrder('score')}>
+            <span className='w-[30%] inline-block transform-anim hover:bg-line py-1 rounded-lg active:shaded' onClick={() => changeOrder('score')}>
               <span className="mr-1">Score</span>
               {scoreOrder === ScoreOrder.SCORE_ASC ?
                 <FontAwesomeIcon icon={faAngleUp} />
@@ -88,7 +115,7 @@ export default function Attempts() {
                   <FontAwesomeIcon icon={faAngleDown} />
                   : ""}
             </span>
-            <span className='w-[65%] inline-block transform-anim hover:bg-line py-1 rounded-lg active:shaded' onClick={() => changeOrder('time')}>
+            <span className='w-[60%] inline-block transform-anim hover:bg-line py-1 rounded-lg active:shaded' onClick={() => changeOrder('time')}>
               <span className="mr-1">Attempted At</span>
               {scoreOrder === ScoreOrder.TIME_ASC ?
                 <FontAwesomeIcon icon={faAngleUp} />
@@ -96,15 +123,11 @@ export default function Attempts() {
                   <FontAwesomeIcon icon={faAngleDown} />
                   : ""}
             </span>
+            <span className="inline-block w-[10%]"></span>
           </li>
 
           {scores.map((score, idx) => (
-            <li key={`score-${idx}`} className='w-full bg-line py-4 my-3 rounded-xl shadow transform-anim hover:scale-x-102 hover:scale-y-105 hover:font-bold'>
-              <span className='w-[35%] inline-block'>{score.score}</span>
-              <span className='w-[65%] inline-block'>
-                {score.time.toLocaleString('en-au')}
-              </span>
-            </li>
+            <ScoreEntry score={score} key={`score-${idx}`} />
           ))}
         </ul>
       </section>
