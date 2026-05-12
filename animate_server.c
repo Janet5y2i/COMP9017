@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <signal.h>
 #include <errno.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #define BUFF 1024
 
