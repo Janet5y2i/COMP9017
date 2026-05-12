@@ -4,19 +4,23 @@
 #include <stdio.h>
 #include <signal.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <string.h>
 
 #define BUFF 1024
 
+volatile sig_atomic_t latest_client_pid = 0;
+
 void signalHandler(int sig, siginfo_t *info, void *ucontext){
-    pid_t client_pid = info->si_pid;
-    printf("Signal received from: %d.\n", client_pid);
+    latest_client_pid = info->si_pid;
+    printf("Signal received from: %d.\n", latest_client_pid);
     char path_c2s[BUFF];
     char path_s2c[BUFF];
     //set FIFO path by id
-    sprintf(path_c2s, "FIFO_C2S_%d", client_pid);
-    sprintf(path_s2c, "FIFO_S2C_%d", client_pid);
+    sprintf(path_c2s, "FIFO_C2S_%d", latest_client_pid);
+    sprintf(path_s2c, "FIFO_S2C_%d", latest_client_pid);
 
     int res_c2s = mkfifo(path_c2s, 0666);
     int res_s2c = mkfifo(path_s2c, 0666);
@@ -40,10 +44,46 @@ void signalHandler(int sig, siginfo_t *info, void *ucontext){
             perror("mkfifo");
         }
     }
-    //make FIFO
+    //passing the siqusr2 to client
 
-    kill(client_pid, SIGUSR2);
+    kill(latest_client_pid, SIGUSR2);
+}
 
+int user_balance (char FILE[], char cmd[BUFF]){
+    FILE *fptr;
+    char buffer[BUFF];
+    char input[] = cmd;
+
+    fptr = fopen(FILE, "r");
+
+    if (fptr == NULL){
+        perror("fopen");
+        return 0;
+    }
+
+    //read and compare the user line by line
+    //save the login user name from input
+    char loginName[BUFF];
+    sscanf(input, "%*s %s", loginName);
+    
+    //save the userName & balance from file
+    char userName[BUFF];
+    int balance;
+
+    while (fscanf(fptr, "%s %d", userName, &balance) != EOF){
+        if (strcmp(loginName, userName) != 0){
+            if (balance > 0){
+                printf("Welcome %s. Your balance is %d\n", userName, balance);
+                return balance;
+            } else {
+                printf("Reject BALANCE\n");
+                return 0;
+            } 
+        } 
+    }
+
+    printf("Reject UNAUTHORISED\n");
+    return -1;
 }
 
 int main(int argc, char** argv, char** envp) {
@@ -73,10 +113,35 @@ int main(int argc, char** argv, char** envp) {
     //prevent the code end before receiving reply
     char req[BUFF];
     while(1){
-        if (read(res_s2c,req,sizeof(req)) != NULL){
-            
-        }
         pause();
+
+        //after receiving signal back to the program
+        char path_c2s[BUFF];
+        char req[BUFF];
+        //get the latest client's channel
+        sprintf(path_c2s, "FIFO_C2S_%d", latest_client_pid);
+        int fd_c2s = open(path_c2s, O_RDONLY); //read only
+
+        //read the message: ssize_t can be -1
+        //sizeof(req)-1 not include the last \0
+        ssize_t size_read = read(fd_c2s, req, sizeof(req)-1);
+        char fileName[] = "users.txt";
+
+        if(size_read > 0){
+            //read the users.txt compare and get ballence
+            int auth = user_balance(fileName, req);
+        } else {
+            printf("Error");
+            return 0;
+        }
+
+        if (auth > 0){
+            printf("Login Successfully");
+        } else {
+            printf("Login Fail");
+            close(fd_c2s);
+        }
+
     }
 
     animate_destroy_canvas(canvas);
