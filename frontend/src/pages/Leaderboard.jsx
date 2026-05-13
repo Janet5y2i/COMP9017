@@ -31,7 +31,7 @@ export default function Leaderboard() {
           <ul className='w-full text-center'>
 
 
-            <li className='w-full font-bold mt-3 mb-5'>
+            <li className='w-full font-bold mt-3 mb-5 flex items-center'>
               <span className='w-[15%] inline-block'>Rank</span>
               <span className='w-[65%] inline-block'>Username</span>
               <span className='w-[20%] inline-block'>Highest Score Achieved</span>
