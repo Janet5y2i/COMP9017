@@ -9,7 +9,7 @@
 #include <sys/types.h>
 #include <string.h>
 
-#define BUFF 1024
+#define BUFF 64
 #define MAXUSERNAME 32
 
 volatile sig_atomic_t latest_client_pid = 0;
@@ -23,9 +23,11 @@ void signalHandler(int sig, siginfo_t *info, void *ucontext){
     sprintf(path_c2s, "FIFO_C2S_%d", latest_client_pid);
     sprintf(path_s2c, "FIFO_S2C_%d", latest_client_pid);
 
+    unlink(path_c2s);
+    unlink(path_s2c);
     int res_c2s = mkfifo(path_c2s, 0666);
     int res_s2c = mkfifo(path_s2c, 0666);
-
+    kill(latest_client_pid, SIGUSR2);
     //remove the exist one if exist
     if (res_c2s == -1){
         if (errno == EEXIST){
@@ -47,46 +49,33 @@ void signalHandler(int sig, siginfo_t *info, void *ucontext){
     }
     //passing the siqusr2 to client
 
-    kill(latest_client_pid, SIGUSR2);
+
 }
 
-int authorisation (char filename[], char cmd[BUFF]){
-    FILE *fptr;
-    char buffer[BUFF];
-    char input[BUFF];
-
-    strcpy(input, cmd);
-
-    fptr = fopen(filename, "r");
-
+int authorisation (const char *username){
+    FILE *fptr = fopen("users.txt", "r");
     if (fptr == NULL){
-        perror("fopen");
-        return 0;
+        return -3;
     }
 
-    //read and compare the user line by line
-    //save the login user name from input
-    char loginName[MAXUSERNAME];
-    sscanf(input, "%*s %s", loginName);
-    
-    //save the userName & balance from file
-    char userName[MAXUSERNAME];
+    char user[MAXUSERNAME];
     int balance;
 
-    while (fscanf(fptr, "%s %d", userName, &balance) != EOF){
-        if (strcmp(loginName, userName) == 0){
+    while (fscanf(fptr, "%s %d", user, &balance) != EOF){
+        if(strcmp(username, user) == 0){
+            fclose(fptr);
             if (balance > 0){
-                printf("Welcome %s. Your balance is %d\n", userName, balance);
                 return balance;
-            } else if (balance <= 0) {
-                //printf("Reject BALANCE\n");
-                return 0;
-            } 
-        } 
+            } else {
+                return -2; //balance < 0
+            }
+        }
     }
 
-    //printf("Reject UNAUTHORISED\n");
+    fclose(fptr);
+    //user not exist
     return -1;
+
 }
 
 int main(int argc, char** argv, char** envp) {
@@ -103,37 +92,62 @@ int main(int argc, char** argv, char** envp) {
     printf("Server PID: %d.\n", pid);
 
     //third: after receiving the signal from the client
-    struct sigaction sa;
-    sigemptyset(&sa.sa_mask);
+    struct sigaction sa = {0};
+    //sigemptyset(&sa.sa_mask);
     sa.sa_flags = SA_SIGINFO;
     sa.sa_sigaction = signalHandler;
-
 
     //receiving sigusr1 from client,  send FIFO and sigusrs to client
     sigaction(SIGUSR1, &sa, NULL);
     
 
     //prevent the code end before receiving reply
-    char req[BUFF];
     while(1){
         pause();
 
         //after receiving signal back to the program
         char path_c2s[BUFF];
         char path_s2c[BUFF];
-        char req[BUFF];
+        
         //get the latest client's channel
         sprintf(path_c2s, "FIFO_C2S_%d", latest_client_pid);
+        sprintf(path_s2c, "FIFO_S2C_%d", latest_client_pid);
         
-        int fd_s2c = open(path_s2c, O_WRONLY); //write only
-        printf("Client: S2C 開啟成功！\n");
         int fd_c2s = open(path_c2s, O_RDONLY); //read only
-        printf("Client: C2S 開啟成功！\n");
+        int fd_s2c = open(path_s2c, O_WRONLY); //write only
         
-
+        char req[BUFF];
         //read the message: ssize_t can be -1
         //sizeof(req)-1 not include the last \0
         ssize_t size_read = read(fd_c2s, req, sizeof(req)-1);
+
+        if (size_read > 0){
+            req[size_read] = '\0';
+            char username[MAXUSERNAME];
+            if (sscanf(req, "Login %s", username) == 1){
+                int res = authorisation(username);
+                char res_msg[BUFF];
+                if (res >= 0) {
+                    sprintf(res_msg, "%d\n", res);
+                    write(fd_s2c, res_msg, strlen(res_msg));
+                    unlink(path_c2s);
+                    unlink(path_s2c);
+                } else {
+                    if (res == -2){
+                        strcpy(res_msg,"Reject BALANCE\n");
+                    } else {
+                        strcpy(res_msg,"Reject UNAUTHORISED\n");
+                    }
+                    write(fd_s2c, res_msg, strlen(res_msg));
+                    sleep(1);
+                    unlink(path_c2s);
+                    unlink(path_s2c);
+                }
+            }
+        }
+        close(fd_c2s);
+        close(fd_s2c);
+/*
         char fileName[] = "users.txt";
         char res[BUFF];
         int auth;
@@ -171,6 +185,8 @@ int main(int argc, char** argv, char** envp) {
     }
 
     animate_destroy_canvas(canvas);
-    
+    */
+    }
     return 0;
+    
 }
