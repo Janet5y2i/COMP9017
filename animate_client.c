@@ -72,14 +72,23 @@ int main(int argc, char** argv, char** envp) {
     sprintf(path_c2s, "FIFO_C2S_%d", client_pid);
     sprintf(path_s2c, "FIFO_S2C_%d", client_pid);
 
-    //open fifo
-    int fd_c2s = open(path_c2s, O_WRONLY); //write only
-    int fd_s2c = open(path_s2c, O_RDONLY); //read only
-
-    //send login message to server
     char req[BUFF];
     char username[BUFF];
     fgets(req, BUFF, stdin);
+
+    //open fifo
+    int fd_c2s = open(path_c2s, O_WRONLY); //write only
+    printf("Client: C2S 開啟成功！\n");
+    int fd_s2c = open(path_s2c, O_RDONLY); //read only
+    printf("Client: S2C 開啟成功！\n");
+    
+    
+    
+    
+
+    //send login message to server
+    
+    
     sscanf(req, "%*s %s", username);
 
     if (strstr(req, "Login") != NULL){
@@ -88,7 +97,8 @@ int main(int argc, char** argv, char** envp) {
 
     char res[BUFF];
 
-    read(fd_s2c, res, sizeof(res)-1);
+    ssize_t n = read(fd_s2c, res, sizeof(res)-1);
+    if (n>0) res[n] = '\0';
     if (strcmp(res,"Reject BALANCE\n") == 0){
         printf("%s", res);
     } else if (strcmp(res, "Reject UNAUTHORISED\n") == 0){
