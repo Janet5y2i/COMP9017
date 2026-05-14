@@ -131,6 +131,7 @@ int main(int argc, char** argv, char** envp) {
         //sizeof(req)-1 not include the last \0
         ssize_t size_read = read(fd_c2s, req, sizeof(req)-1);
         char fileName[] = "users.txt";
+        char res[BUFF];
         int auth;
         char rejectBalance[] = "Reject BALANCE\n";
         char rejectAuth[] = "Reject UNAUTHORISED\n";
@@ -144,16 +145,23 @@ int main(int argc, char** argv, char** envp) {
         }
 
         if (auth > 0){
-            printf("Login Successfully");
-            write(fd_s2c, (char)auth, sizeof((char)auth));
+            //printf("Login Successfully");
+            sprintf(res, "%d\n", auth);
+            write(fd_s2c, res, strlen(res));
         } else if (auth == 0) {
-            write(fd_s2c, rejectBalance, sizeof(rejectBalance));
+            write(fd_s2c, rejectBalance, strlen(rejectBalance));
+            sleep(1);
             close(fd_c2s);
             close(fd_s2c);
+            unlink(path_c2s);
+            unlink(path_s2c);
         } else {
-            write(fd_s2c, rejectAuth, sizeof(rejectAuth));
+            write(fd_s2c, rejectAuth, strlen(rejectAuth));
+            sleep(1);
             close(fd_c2s);
             close(fd_s2c);
+            unlink(path_c2s);
+            unlink(path_s2c);
         }
 
     }
