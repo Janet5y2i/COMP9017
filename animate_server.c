@@ -10,6 +10,7 @@
 #include <string.h>
 
 #define BUFF 1024
+#define MAXUSERNAME 32
 
 volatile sig_atomic_t latest_client_pid = 0;
 
@@ -49,12 +50,14 @@ void signalHandler(int sig, siginfo_t *info, void *ucontext){
     kill(latest_client_pid, SIGUSR2);
 }
 
-int user_balance (char FILE[], char cmd[BUFF]){
+int authorisation (char filename[], char cmd[BUFF]){
     FILE *fptr;
     char buffer[BUFF];
-    char input[] = cmd;
+    char input[BUFF];
 
-    fptr = fopen(FILE, "r");
+    strcpy(input, cmd);
+
+    fptr = fopen(filename, "r");
 
     if (fptr == NULL){
         perror("fopen");
@@ -63,15 +66,15 @@ int user_balance (char FILE[], char cmd[BUFF]){
 
     //read and compare the user line by line
     //save the login user name from input
-    char loginName[BUFF];
+    char loginName[MAXUSERNAME];
     sscanf(input, "%*s %s", loginName);
     
     //save the userName & balance from file
-    char userName[BUFF];
+    char userName[MAXUSERNAME];
     int balance;
 
     while (fscanf(fptr, "%s %d", userName, &balance) != EOF){
-        if (strcmp(loginName, userName) != 0){
+        if (strcmp(loginName, userName) == 0){
             if (balance > 0){
                 printf("Welcome %s. Your balance is %d\n", userName, balance);
                 return balance;
@@ -126,10 +129,11 @@ int main(int argc, char** argv, char** envp) {
         //sizeof(req)-1 not include the last \0
         ssize_t size_read = read(fd_c2s, req, sizeof(req)-1);
         char fileName[] = "users.txt";
+        int auth;
 
         if(size_read > 0){
             //read the users.txt compare and get ballence
-            int auth = user_balance(fileName, req);
+            auth = authorisation(fileName, req);
         } else {
             printf("Error");
             return 0;
