@@ -124,14 +124,29 @@ int main(int argc, char** argv, char** envp) {
         if (size_read > 0){
             req[size_read] = '\0';
             char username[MAXUSERNAME];
+            //get username
             if (sscanf(req, "Login %s", username) == 1){
+                //get balance or reject reson from authorisation function
                 int res = authorisation(username);
                 char res_msg[BUFF];
                 if (res >= 0) {
                     sprintf(res_msg, "%d\n", res);
                     write(fd_s2c, res_msg, strlen(res_msg));
-                    unlink(path_c2s);
-                    unlink(path_s2c);
+
+                    //start RPC
+                    while (1){
+                        char cmd_buf[BUFF];
+                        ssize_t cmd_size = read(fd_c2s, cmd_buf, sizeof(cmd_buf)-1);
+                        if (n < 0){
+                            break;
+                        } else {
+                            cmd_buf[cmd_size]
+                        }
+                        command_handler();
+                    }
+
+
+                    
                 } else {
                     if (res == -2){
                         strcpy(res_msg,"Reject BALANCE\n");
@@ -145,44 +160,11 @@ int main(int argc, char** argv, char** envp) {
                 }
             }
         }
+        unlink(path_c2s);
+        unlink(path_s2c);
         close(fd_c2s);
         close(fd_s2c);
 /*
-        char fileName[] = "users.txt";
-        char res[BUFF];
-        int auth;
-        char rejectBalance[] = "Reject BALANCE\n";
-        char rejectAuth[] = "Reject UNAUTHORISED\n";
-
-        if(size_read > 0){
-            //read the users.txt compare and get ballence
-            auth = authorisation(fileName, req);
-        } else {
-            printf("Error");
-            return 0;
-        }
-
-        if (auth > 0){
-            //printf("Login Successfully");
-            sprintf(res, "%d\n", auth);
-            write(fd_s2c, res, strlen(res));
-        } else if (auth == 0) {
-            write(fd_s2c, rejectBalance, strlen(rejectBalance));
-            sleep(1);
-            close(fd_c2s);
-            close(fd_s2c);
-            unlink(path_c2s);
-            unlink(path_s2c);
-        } else {
-            write(fd_s2c, rejectAuth, strlen(rejectAuth));
-            sleep(1);
-            close(fd_c2s);
-            close(fd_s2c);
-            unlink(path_c2s);
-            unlink(path_s2c);
-        }
-
-    }
 
     animate_destroy_canvas(canvas);
     */
