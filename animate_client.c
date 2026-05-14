@@ -8,7 +8,7 @@
 #include <string.h>
 
 #define BUFF 1024
-
+#define MAXUSERNAME 32
 
 //initialize the flag
 volatile sig_atomic_t flag = 0;
@@ -68,43 +68,40 @@ int main(int argc, char** argv, char** envp) {
      //set FIFO path by id   
     char path_c2s[BUFF];
     char path_s2c[BUFF];
-
+    char req[BUFF];
+    char res[BUFF];
+    char username[MAXUSERNAME];
     sprintf(path_c2s, "FIFO_C2S_%d", client_pid);
     sprintf(path_s2c, "FIFO_S2C_%d", client_pid);
 
-    char req[BUFF];
-    char username[BUFF];
     fgets(req, BUFF, stdin);
-
+    //send login message to server
+    sscanf(req, "Login %s\n", username);
+    
     //open fifo
     int fd_c2s = open(path_c2s, O_WRONLY); //write only
-    printf("Client: C2S 開啟成功！\n");
     int fd_s2c = open(path_s2c, O_RDONLY); //read only
-    printf("Client: S2C 開啟成功！\n");
-    
-    
-    
-    
 
-    //send login message to server
-    
-    
-    sscanf(req, "%*s %s", username);
 
-    if (strstr(req, "Login") != NULL){
-        write(fd_c2s, req, strlen(req));
+
+    write(fd_c2s, req, strlen(req));
+
+    ssize_t size_read = read(fd_s2c, res, sizeof(res)-1);
+    if ( size_read > 0) {
+        res[size_read] = '\0';
+        if ((strstr(res, "Reject") != NULL)){
+            printf("%s\n", res);
+            //close(fd_c2s);
+            //close(fd_s2c);
+            //unlink(path_c2s);
+            //unlink(path_s2c);
+        } else {
+            printf("Welcome %s. Your balance is %s.\n", username, res);
+        }
     }
-
-    char res[BUFF];
-
-    ssize_t n = read(fd_s2c, res, sizeof(res)-1);
-    if (n>0) res[n] = '\0';
-    if (strcmp(res,"Reject BALANCE\n") == 0){
-        printf("%s", res);
-    } else if (strcmp(res, "Reject UNAUTHORISED\n") == 0){
-        printf("%s", res);
-    } else {
-        printf("Welcome %s. Your balance is %s\n", username, res);
-    }
+    close(fd_c2s);
+    close(fd_s2c);
+    unlink(path_c2s);
+    unlink(path_s2c);
     return 0;
 }
