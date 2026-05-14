@@ -78,14 +78,14 @@ int authorisation (char filename[], char cmd[BUFF]){
             if (balance > 0){
                 printf("Welcome %s. Your balance is %d\n", userName, balance);
                 return balance;
-            } else {
-                printf("Reject BALANCE\n");
+            } else if (balance <= 0) {
+                //printf("Reject BALANCE\n");
                 return 0;
             } 
         } 
     }
 
-    printf("Reject UNAUTHORISED\n");
+    //printf("Reject UNAUTHORISED\n");
     return -1;
 }
 
@@ -120,16 +120,20 @@ int main(int argc, char** argv, char** envp) {
 
         //after receiving signal back to the program
         char path_c2s[BUFF];
+        char path_s2c[BUFF];
         char req[BUFF];
         //get the latest client's channel
         sprintf(path_c2s, "FIFO_C2S_%d", latest_client_pid);
         int fd_c2s = open(path_c2s, O_RDONLY); //read only
+        int fd_s2c = open(path_s2c, O_WRONLY); //write only
 
         //read the message: ssize_t can be -1
         //sizeof(req)-1 not include the last \0
         ssize_t size_read = read(fd_c2s, req, sizeof(req)-1);
         char fileName[] = "users.txt";
         int auth;
+        char rejectBalance[] = "Reject BALANCE\n";
+        char rejectAuth[] = "Reject UNAUTHORISED\n";
 
         if(size_read > 0){
             //read the users.txt compare and get ballence
@@ -141,9 +145,15 @@ int main(int argc, char** argv, char** envp) {
 
         if (auth > 0){
             printf("Login Successfully");
-        } else {
-            printf("Login Fail");
+            write(fd_s2c, (char)auth, sizeof((char)auth));
+        } else if (auth == 0) {
+            write(fd_s2c, rejectBalance, sizeof(rejectBalance));
             close(fd_c2s);
+            close(fd_s2c);
+        } else {
+            write(fd_s2c, rejectAuth, sizeof(rejectAuth));
+            close(fd_c2s);
+            close(fd_s2c);
         }
 
     }
