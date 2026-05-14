@@ -83,5 +83,17 @@ int main(int argc, char** argv, char** envp) {
     if (strstr(req, "Login") != NULL){
         write(fd_c2s, req, strlen(req));
     }
+    waipid(server_pid);
+
+    char res[BUFF];
+
+    read(fd_s2c, res, sizeof(res)-1);
+    if (res == "Reject BALANCE\n"){
+        printf("%c", res);
+    } else if (res == "Reject UNAUTHORISED\n"){
+        printf("%c", res);
+    } else {
+        printf("Welcome %c. Your balance is %c\n", res);
+    }
     return 0;
 }
