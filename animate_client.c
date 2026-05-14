@@ -81,7 +81,7 @@ int main(int argc, char** argv, char** envp) {
     fgets(req, BUFF, stdin);
 
     if (strstr(req, "Login") != NULL){
-        write(fd_c2s, req, sizeof(req));
+        write(fd_c2s, req, strlen(req));
     }
     return 0;
 }
