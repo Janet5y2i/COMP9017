@@ -124,8 +124,12 @@ int main(int argc, char** argv, char** envp) {
         char req[BUFF];
         //get the latest client's channel
         sprintf(path_c2s, "FIFO_C2S_%d", latest_client_pid);
-        int fd_c2s = open(path_c2s, O_RDONLY); //read only
+        
         int fd_s2c = open(path_s2c, O_WRONLY); //write only
+        printf("Client: S2C 開啟成功！\n");
+        int fd_c2s = open(path_c2s, O_RDONLY); //read only
+        printf("Client: C2S 開啟成功！\n");
+        
 
         //read the message: ssize_t can be -1
         //sizeof(req)-1 not include the last \0
