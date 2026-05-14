@@ -109,13 +109,12 @@ int main(int argc, char** argv, char** envp) {
 
                 if (res_size > 0){
                     res_buf[res_size] = '\0';
-                    
+
                 }
 
                 }
             }
         }
-    }
     close(fd_c2s);
     close(fd_s2c);
     unlink(path_c2s);
