@@ -9,8 +9,28 @@
 #include <sys/types.h>
 #include <string.h>
 
-#define BUFF 64
+#define BUFF 1024
 #define MAXUSERNAME 32
+
+typedef struct  {
+    pid_t client_pid;
+    int fd_c2s;
+    int fd_s2c;
+    char username[MAXUSERNAME];
+    int is_logged_in;
+} rpc_task;
+
+typedef struct rpc_task {
+    char cmd[BUFF];
+    int client_fd_s2c;
+    struct rpc_task* next_task;
+} rpc_task_t;
+
+rpc_task_t* task_q_head = NULL;
+pthread_mutex_t task_q_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t task_q_cond = PTHREAD_COND_INITIALIZER;
+
+int threadpool_size;
 
 volatile sig_atomic_t latest_client_pid = 0;
 
@@ -78,6 +98,17 @@ int authorisation (const char *username){
 
 }
 
+//handle the command from client
+void command_handler(char *cmd, int fd_s2c){
+    char res_msg[BUFF];
+
+    char store_cmd = strtok(cmd, " \n");
+    if (store_cmd == NULL) return;
+
+
+
+}
+
 int main(int argc, char** argv, char** envp) {
     if (argc < 2) {
         fprintf(stderr, "Usage: %s <threadpool size>\n", argv[0]);
@@ -128,21 +159,26 @@ int main(int argc, char** argv, char** envp) {
             if (sscanf(req, "Login %s", username) == 1){
                 //get balance or reject reson from authorisation function
                 int res = authorisation(username);
+                //set response msq
                 char res_msg[BUFF];
                 if (res >= 0) {
                     sprintf(res_msg, "%d\n", res);
                     write(fd_s2c, res_msg, strlen(res_msg));
 
-                    //start RPC
+                    //start RPC if user exit and balance > 0
                     while (1){
                         char cmd_buf[BUFF];
                         ssize_t cmd_size = read(fd_c2s, cmd_buf, sizeof(cmd_buf)-1);
                         if (n < 0){
                             break;
                         } else {
-                            cmd_buf[cmd_size]
+                            cmd_buf[cmd_size] = '\0'
+                            if (strstr(cmd_buf, "Disconnect") != NULL){
+                                write(fd_s2c, "0\0", 2);
+                            }
+                            command_handler();
                         }
-                        command_handler();
+                        
                     }
 
 
