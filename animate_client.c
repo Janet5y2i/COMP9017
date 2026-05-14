@@ -78,12 +78,13 @@ int main(int argc, char** argv, char** envp) {
 
     //send login message to server
     char req[BUFF];
+    char username[BUFF];
     fgets(req, BUFF, stdin);
+    sscanf(req, "%*s %s", username);
 
     if (strstr(req, "Login") != NULL){
         write(fd_c2s, req, strlen(req));
     }
-    waitpid(server_pid);
 
     char res[BUFF];
 
@@ -93,7 +94,7 @@ int main(int argc, char** argv, char** envp) {
     } else if (strcmp(res, "Reject UNAUTHORISED\n") == 0){
         printf("%s", res);
     } else {
-        printf("Welcome %s. Your balance is %d\n", res);
+        printf("Welcome %s. Your balance is %s\n", username, res);
     }
     return 0;
 }
