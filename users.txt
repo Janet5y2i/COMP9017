@@ -1,4 +1,4 @@
-ExcitableFabricator 1
+ExcitableFabricators 1
 UnwillingDeveloper 10
 QueasyMidwife 0
 JollyPainter -10
