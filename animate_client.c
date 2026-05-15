@@ -102,6 +102,7 @@ int main(int argc, char** argv, char** envp) {
         } else {
             res[strcspn(res, "\r\n")] = 0;
             printf("Welcome %s. Your balance is %s.\n", username, res);
+            fflush(stdout);
             while(1){
                 char cmd_buf[BUFF];
                 if (fgets(cmd_buf, BUFF, stdin) == NULL) break;
