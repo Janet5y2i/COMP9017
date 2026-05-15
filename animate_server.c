@@ -192,6 +192,7 @@ int main(int argc, char** argv, char** envp) {
         
         //create a fd_set to store the fd of all clients
         //use select to monitor the fd
+        //if any fd input, fd_set will know, read one by one
         fd_set read_fds;
         FD_ZERO(&read_fds);
         int max_fd = -1;
@@ -203,6 +204,7 @@ int main(int argc, char** argv, char** envp) {
         }
 
         struct timeval tv = {0, 100}; //set timeout to 100ms
+
         int waiting = select(max_fd + 1, &read_fds, NULL, NULL, &tv);
         if (waiting > 0){
             char cmd[BUFF] = {0};
@@ -211,6 +213,10 @@ int main(int argc, char** argv, char** envp) {
                     ssize_t size_read = read(clients[i].fd_c2s, cmd, BUFF - 1);
                     if (size_read > 0){
                         cmd[size_read] = '\0';
+
+                        if (strstr(cmd, "Disconnect") != NULL){
+                        }
+
                         client_task_t* new_task = malloc(sizeof(client_task_t));
                         new_task->fd_c2s = clients[i].fd_c2s;
                         new_task->fd_s2c = clients[i].fd_s2c;
