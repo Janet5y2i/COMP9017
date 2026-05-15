@@ -100,6 +100,7 @@ int main(int argc, char** argv, char** envp) {
             unlink(path_c2s);
             unlink(path_s2c);
         } else {
+            res[strcspn(res, "\r\n")] = 0;
             printf("Welcome %s. Your balance is %s.\n", username, res);
             while(1){
                 char cmd_buf[BUFF];
