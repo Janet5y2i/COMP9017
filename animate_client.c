@@ -10,7 +10,7 @@
 #include <pthread.h>
 
 #define BUFF 1024
-#define MAXUSERNAME 32
+#define MAXUSERNAME 32+1
 
 //initialize the flag
 volatile sig_atomic_t flag = 0;

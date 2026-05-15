@@ -12,7 +12,7 @@
 #include <pthread.h>
 
 #define BUFF 1024
-#define MAXUSERNAME 32
+#define MAXUSERNAME 32+1
 
 pthread_mutex_t task_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t task_cond = PTHREAD_COND_INITIALIZER;
