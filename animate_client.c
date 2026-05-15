@@ -108,7 +108,7 @@ int main(int argc, char** argv, char** envp) {
             unlink(path_c2s);
             unlink(path_s2c);
             return 0;
-}
+            
             while(1){
                 char cmd_buf[BUFF];
                 if (fgets(cmd_buf, BUFF, stdin) == NULL) break;
