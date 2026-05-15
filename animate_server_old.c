@@ -1,4 +1,3 @@
-
 #include "animate/animate.h"
 #include <unistd.h>
 #include <stdio.h>
@@ -18,7 +17,8 @@ typedef struct  {
     int fd_s2c;
     char username[MAXUSERNAME];
     int is_logged_in;
-} rpc_task;
+    sturct 
+} client_info_t;
 
 typedef struct rpc_task {
     char cmd[BUFF];
@@ -40,8 +40,9 @@ void signalHandler(int sig, siginfo_t *info, void *ucontext){
     char path_c2s[BUFF];
     char path_s2c[BUFF];
     //set FIFO path by id
-    sprintf(path_c2s, "FIFO_C2S_%d", latest_client_pid);
     sprintf(path_s2c, "FIFO_S2C_%d", latest_client_pid);
+    sprintf(path_c2s, "FIFO_C2S_%d", latest_client_pid);
+    
 
     unlink(path_c2s);
     unlink(path_s2c);
@@ -67,6 +68,8 @@ void signalHandler(int sig, siginfo_t *info, void *ucontext){
             perror("mkfifo");
         }
     }
+
+    client_info_t* client
     //passing the siqusr2 to client
 
 
@@ -143,6 +146,10 @@ int main(int argc, char** argv, char** envp) {
     //initialize the thread pool
     threadpool_size = atoi(argv[1]);
     pthread_t *threads = malloc(sizeof(pthread_t) * threadpool_size);
+    if  (threads == NULL){
+        perror("malloc");
+        return 1;
+    }
 
     //starting the thread pool
     for (int i = 0; i < threadpool_size; i++){
@@ -229,7 +236,6 @@ int main(int argc, char** argv, char** envp) {
         close(fd_c2s);
         close(fd_s2c);
 /*
-
     animate_destroy_canvas(canvas);
     */
     }

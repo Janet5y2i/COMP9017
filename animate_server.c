@@ -105,17 +105,26 @@ void cmd_handler(char* cmd, int fd_c2s, int fd_s2c){
 void* worker_thread(void* arg){
     while (1){
         pthread_mutex_lock(&task_mutex);
-        if (task_head != NULL){
+        if (task_head == NULL){
             pthread_cond_wait(&task_cond, &task_mutex);     
 
         }
             
         client_task_t* task = task_head;
         task_head = task_head->next;
+
+        if (task_head == NULL){
+            task_tail = NULL;
+        }
+
+
         pthread_mutex_unlock(&task_mutex);
+
         cmd_handler(task->cmd, task->fd_c2s, task->fd_s2c);
         free(task);
         }
+
+    return NULL;
         
     }
 
@@ -128,6 +137,7 @@ int main(int argc, char** argv, char** envp) {
     pid_t pid = getpid();
     printf("Server PID: %d.\n", pid);
 
+    struct canvas* canvas = animate_create_canvas(100,100,0);
     
     pthread_t* threads = malloc(sizeof(pthread_t) * atoi(argv[1]));
     if (threads == NULL){
@@ -223,6 +233,8 @@ int main(int argc, char** argv, char** envp) {
             }
         }
     }
+
+    animate_destroy_canvas(canvas);
     return 0;
 }
 
