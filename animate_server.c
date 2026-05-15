@@ -12,7 +12,9 @@
 #include <pthread.h>
 
 #define BUFF 1024
+
 #define MAXUSERNAME 32+1
+
 
 pthread_mutex_t task_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t task_cond = PTHREAD_COND_INITIALIZER;
@@ -192,7 +194,9 @@ int main(int argc, char** argv, char** envp) {
         
         //create a fd_set to store the fd of all clients
         //use select to monitor the fd
+
         //if any fd input, fd_set will know, read one by one
+
         fd_set read_fds;
         FD_ZERO(&read_fds);
         int max_fd = -1;
@@ -214,8 +218,10 @@ int main(int argc, char** argv, char** envp) {
                     if (size_read > 0){
                         cmd[size_read] = '\0';
 
+
                         if (strstr(cmd, "Disconnect") != NULL){
                         }
+
 
                         client_task_t* new_task = malloc(sizeof(client_task_t));
                         new_task->fd_c2s = clients[i].fd_c2s;
