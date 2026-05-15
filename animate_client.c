@@ -1,11 +1,13 @@
-#include <stdio.h>
 #include <unistd.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <string.h>
+#include <pthread.h>
 
 #define BUFF 1024
 #define MAXUSERNAME 32
@@ -74,13 +76,12 @@ int main(int argc, char** argv, char** envp) {
     sprintf(path_c2s, "FIFO_C2S_%d", client_pid);
     sprintf(path_s2c, "FIFO_S2C_%d", client_pid);
 
-    //send login message to server
-    //get login cmd from user
+    //send login message to server, get login cmd from user
     fgets(req, BUFF, stdin);
     //get username from stdin
     sscanf(req, "Login %s\n", username);
     
-    //open fifo
+    //open fifo based on the path
     int fd_c2s = open(path_c2s, O_WRONLY); //write only
     int fd_s2c = open(path_s2c, O_RDONLY); //read only
 
