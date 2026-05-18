@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 ExcitableFabricators 1
-=======
-ExcitableFabricator 1
->>>>>>> f19b93e348994fcece179217152658d1073ee643
 UnwillingDeveloper 10
 QueasyMidwife 0
 JollyPainter -10

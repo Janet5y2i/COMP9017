@@ -88,29 +88,37 @@ int authorisation (const char *username, pid_t client_pid){
 }
 
 
-void cmd_handler(char* cmd, int fd_c2s, int fd_s2c, pid_t client_pid){
-    char res_cmd[BUFF];
+void cmd_handler(char* cmd, client_t* client, pid_t client_pid, char* output){
+    int fd_s2c = client->fd_s2c;
+    int fd_c2s = client->fd_c2s;
 
     if (strstr(cmd, "Login") != NULL) {
         char username[MAXUSERNAME];
         sscanf(cmd, "Login %s", username);
         int res = authorisation(username, client_pid);
         if (res >= 0){
-            sprintf(res_cmd, "%d\n", res);
-            write(fd_s2c, res_cmd, strlen(res_cmd));
+            sprintf(output, "%d\n", res);
+            return;
         } else {
             if (res == -2){
-                strcpy(res_cmd,"Reject BALANCE\n");
+                strcpy(output, "Reject BALANCE\n");
+                return;
+
             } else {
-                strcpy(res_cmd,"Reject UNAUTHORISED\n");
+                strcpy(output,"Reject UNAUTHORISED\n");
+                return;
             }
-            write(fd_s2c, res_cmd, strlen(res_cmd));
         }
-    } 
-    
-    if (strstr(cmd, "Disconnect") != NULL){
-        write(fd_s2c, "0\0", 2);
-    } 
+    } else if (strstr(cmd, "Disconnect") != NULL){
+        strcpy(output, "0\n");
+        client->is_logged_in = 0;
+        return;
+    } else {
+        if (client->is_logged_in == 0){
+            strcpy(output, "Not logged in\n");
+            return;
+        }
+    }
         //other cmd
     }
 
@@ -119,10 +127,11 @@ void cmd_handler(char* cmd, int fd_c2s, int fd_s2c, pid_t client_pid){
 void* worker_thread(void* arg){
     while (1){
         pthread_mutex_lock(&task_mutex);
-        if (task_head == NULL){
+        while (task_head == NULL){
             pthread_cond_wait(&task_cond, &task_mutex);     
 
         }
+
             
         client_task_t* task = task_head;
         task_head = task_head->next;
@@ -131,10 +140,38 @@ void* worker_thread(void* arg){
             task_tail = NULL;
         }
 
-
         pthread_mutex_unlock(&task_mutex);
+        //find the client and get check if ready to process the task
+        client_t* client = NULL;
+        char output[BUFF] = {0};
+        
+        for (int i = 0; i < num_clients; i++){
+            if (clients[i].client_pid == task->client_pid){
+                client = &clients[i];
+                break;
+            }
+        }
+        cmd_handler(task->cmd, client, task->client_pid, output);
 
-        cmd_handler(task->cmd, task->fd_c2s, task->fd_s2c, task->client_pid);
+        if (client != NULL){
+            while (1){
+                if (task->task_id == client->next_res_id){
+                    write(task->fd_s2c, output, strlen(output));
+                    client->next_res_id++;
+                    break;
+                }
+                //wait for the previous task to be processed
+                usleep(100);
+            }
+        } else {
+            write(task->fd_s2c, "0\0", 2);
+            
+        }
+
+       
+        
+
+
         free(task);
         }
 
@@ -198,9 +235,13 @@ int main(int argc, char** argv, char** envp) {
             new_client.fd_s2c = open(path_s2c, O_WRONLY);
             new_client.is_logged_in = 0;
             new_client.username[0] = '\0';
+            new_client.tasks_num = 0;
+            new_client.next_res_id = 1;
+            //reset the latest_client_pid
+
+
             clients[num_clients] = new_client;
             num_clients++;
-            //reset the latest_client_pid
             latest_client_pid = 0;
         }
         
