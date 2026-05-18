@@ -28,6 +28,8 @@ typedef struct{
     int fd_s2c;
     char username[MAXUSERNAME];
     int is_logged_in;
+    int tasks_num;
+    int next_res_id;
 } client_t;
 
 //record the clients info
@@ -39,7 +41,9 @@ typedef struct client_task {
     char cmd[BUFF];
     int fd_c2s;
     int fd_s2c;
+    pid_t client_pid;
     struct client_task* next;
+    int task_id;
 } client_task_t;
 
 client_task_t* task_head = NULL;
@@ -49,7 +53,7 @@ void signal_handler(int sig, siginfo_t *info, void *ucontext){
     latest_client_pid = info->si_pid;
 }
 
-int authorisation (const char *username){
+int authorisation (const char *username, pid_t client_pid){
     FILE *fptr = fopen("users.txt", "r");
     if (fptr == NULL){
         return -3;
@@ -62,6 +66,14 @@ int authorisation (const char *username){
         if(strcmp(username, user) == 0){
             fclose(fptr);
             if (balance > 0){
+                for (int i = 0; i < num_clients; i++){
+                    if (clients[i].client_pid == client_pid){
+                        clients[i].is_logged_in = 1;
+                        strncpy(clients[i].username, username, MAXUSERNAME - 1);
+                        clients[i].username[MAXUSERNAME - 1] = '\0';
+                        break;
+                    }
+                }
                 return balance;
             } else {
                 return -2; //balance < 0
@@ -76,13 +88,13 @@ int authorisation (const char *username){
 }
 
 
-void cmd_handler(char* cmd, int fd_c2s, int fd_s2c){
+void cmd_handler(char* cmd, int fd_c2s, int fd_s2c, pid_t client_pid){
     char res_cmd[BUFF];
 
     if (strstr(cmd, "Login") != NULL) {
         char username[MAXUSERNAME];
         sscanf(cmd, "Login %s", username);
-        int res = authorisation(username);
+        int res = authorisation(username, client_pid);
         if (res >= 0){
             sprintf(res_cmd, "%d\n", res);
             write(fd_s2c, res_cmd, strlen(res_cmd));
@@ -122,7 +134,7 @@ void* worker_thread(void* arg){
 
         pthread_mutex_unlock(&task_mutex);
 
-        cmd_handler(task->cmd, task->fd_c2s, task->fd_s2c);
+        cmd_handler(task->cmd, task->fd_c2s, task->fd_s2c, task->client_pid);
         free(task);
         }
 
@@ -226,8 +238,11 @@ int main(int argc, char** argv, char** envp) {
                         client_task_t* new_task = malloc(sizeof(client_task_t));
                         new_task->fd_c2s = clients[i].fd_c2s;
                         new_task->fd_s2c = clients[i].fd_s2c;
+                        new_task->client_pid = clients[i].client_pid;
                         strcpy(new_task->cmd, cmd);
                         new_task->next=NULL;
+                        clients[i].tasks_num++;
+                        new_task->task_id = clients[i].tasks_num;
 
                         pthread_mutex_lock(&task_mutex);
                         //add the tast into task queue
