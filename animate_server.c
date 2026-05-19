@@ -30,6 +30,7 @@ typedef struct{
     int is_logged_in;
     int tasks_num;
     int next_res_id;
+    //record the canvas client create;
     struct canvas* controlled_canvas[BUFF];
 } client_t;
 
@@ -49,6 +50,22 @@ typedef struct client_task {
 
 client_task_t* task_head = NULL;
 client_task_t* task_tail = NULL;
+
+typedef struct {
+    struct canvas* canvas;
+    pid_t client_pid;
+} canvas_t;
+
+typedef struct {
+    struct sprite* sprite;
+    pid_t client_pid;
+} sprite_t;
+
+typedef struct {
+    struct sprite_placement* placement;
+    pid_t client_pid;
+} placement_t;
+
 
 void signal_handler(int sig, siginfo_t *info, void *ucontext){
     latest_client_pid = info->si_pid;
