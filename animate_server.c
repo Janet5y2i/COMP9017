@@ -54,18 +54,29 @@ client_task_t* task_tail = NULL;
 typedef struct {
     struct canvas* canvas;
     pid_t client_pid;
+    pid_t shared_client[BUFF];
+    int shared_cnt;
 } canvas_t;
+
+canvas_t using_canvas[BUFF];
+int using_canvas_cnt = 0;
+
 
 typedef struct {
     struct sprite* sprite;
     pid_t client_pid;
 } sprite_t;
 
+sprite_t using_sprite[BUFF];
+int using_sprite_cnt = 0;
+
 typedef struct {
     struct sprite_placement* placement;
     pid_t client_pid;
 } placement_t;
 
+placement_t using_placement[BUFF];
+int using_placement_cnt = 0;
 
 void signal_handler(int sig, siginfo_t *info, void *ucontext){
     latest_client_pid = info->si_pid;
