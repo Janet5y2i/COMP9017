@@ -30,6 +30,7 @@ typedef struct{
     int is_logged_in;
     int tasks_num;
     int next_res_id;
+    struct canvas* controlled_canvas[BUFF];
 } client_t;
 
 //record the clients info
@@ -113,13 +114,15 @@ void cmd_handler(char* cmd, client_t* client, pid_t client_pid, char* output){
         strcpy(output, "0\n");
         client->is_logged_in = 0;
         return;
+    } else if (strstr(cmd "") != NULL) {
+
     } else {
         if (client->is_logged_in == 0){
             strcpy(output, "Not logged in\n");
             return;
         }
-    }
-        //other cmd
+    } 
+
     }
 
 
@@ -237,6 +240,7 @@ int main(int argc, char** argv, char** envp) {
             new_client.username[0] = '\0';
             new_client.tasks_num = 0;
             new_client.next_res_id = 1;
+            new_client.controlled_canvas[0] = NULL;
             //reset the latest_client_pid
 
 
