@@ -326,7 +326,8 @@ int main(int argc, char** argv, char** envp) {
         //pause();
 
         if (latest_client_pid != 0 && num_clients < BUFF){
-
+            kill(latest_client_pid, SIGUSR2);
+            
             //after receiving signal back to the program
             char path_c2s[BUFF];
             char path_s2c[BUFF];
@@ -341,7 +342,7 @@ int main(int argc, char** argv, char** envp) {
             mkfifo(path_c2s, 0666);
             mkfifo(path_s2c, 0666);
 
-            kill(latest_client_pid, SIGUSR2);
+            
 
             client_t new_client;
             new_client.client_pid = latest_client_pid;
