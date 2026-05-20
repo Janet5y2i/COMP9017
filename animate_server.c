@@ -187,8 +187,6 @@ void cmd_handler(char* cmd, client_t* client, pid_t client_pid, char* output){
         strcpy(output, "Disconnected\n");
         //printf("Client %d disconnected.\n", client_pid);
         client->is_logged_in = 0;
-        //close(fd_c2s);
-        //close(fd_s2c);
         return;
     } 
 
@@ -264,7 +262,7 @@ void* worker_thread(void* arg){
                     if (strstr(output, "Disconnected") != NULL){
                         write(task->fd_s2c, output, strlen(output));
                         //wait a minute to make sure the client receive the message before closing
-                        usleep(100);
+                        usleep(5000);
                         close(client->fd_c2s);
                         close(client->fd_s2c);
                         unlink(client->path_c2s);
@@ -392,9 +390,7 @@ int main(int argc, char** argv, char** envp) {
                     if (size_read > 0){
                         cmd[size_read] = '\0';
 
-
-                        if (strstr(cmd, "Disconnect") != NULL){
-                        }
+                        cmd[strcspn(cmd, "\r\n")] = '\0';
 
 
                         client_task_t* new_task = malloc(sizeof(client_task_t));
