@@ -155,7 +155,7 @@ void* worker_thread(void* arg) {
                     if (strstr(output, "Reject") != NULL || strstr(task->cmd, "Disconnect") != NULL) {
                         usleep(5000);
 
-                        pthread_mutex_lock(&task_mutex);
+                        //pthread_mutex_lock(&task_mutex);
                         client->is_logged_in = 0;
                         close(client->fd_c2s);
                         close(client->fd_s2c);
@@ -164,9 +164,9 @@ void* worker_thread(void* arg) {
                         client->fd_c2s = -1;
                         client->fd_s2c = -1;
 
-                        // 正如你所希望的：Reject 或 Disconnect 時原地清空該 Slot，不引發陣列平移
+                        //
                         memset(client, 0, sizeof(client_t));
-                        pthread_mutex_unlock(&task_mutex);
+                        //pthread_mutex_unlock(&task_mutex);
                     }
                     client->next_res_id++;
                     break;
@@ -309,14 +309,14 @@ int main(int argc, char** argv, char** envp) {
                         pthread_cond_signal(&task_cond);
                         pthread_mutex_unlock(&task_mutex);
                     } else {
-                        // 異常中斷處理
+                        //
                         close(clients[i].fd_c2s); close(clients[i].fd_s2c);
                         unlink(clients[i].path_c2s); unlink(clients[i].path_s2c);
                         
-                        pthread_mutex_lock(&task_mutex);
+                        //pthread_mutex_lock(&task_mutex);
                         memset(&clients[i], 0, sizeof(client_t));
                         num_clients--;
-                        pthread_mutex_unlock(&task_mutex);
+                        //pthread_mutex_unlock(&task_mutex);
                     }
                 }
             }
