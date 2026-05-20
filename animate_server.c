@@ -83,7 +83,7 @@ int using_placement_cnt = 0;
 
 void signal_handler(int sig, siginfo_t *info, void *ucontext){
     latest_client_pid = info->si_pid;
-    kill(latest_client_pid, SIGUSR2);
+    
 }
 
 int authorisation (const char *username, pid_t client_pid){
@@ -327,7 +327,7 @@ int main(int argc, char** argv, char** envp) {
         //pause();
 
         if (latest_client_pid != 0 && num_clients < BUFF){
-
+            kill(latest_client_pid, SIGUSR2);
             //after receiving signal back to the program
             char path_c2s[BUFF];
             char path_s2c[BUFF];
