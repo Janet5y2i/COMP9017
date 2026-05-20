@@ -98,7 +98,7 @@ void cmd_handler(char* cmd, client_t* client, pid_t client_pid, char* output) {
         char username[MAXUSERNAME];
         sscanf(cmd, "Login %s", username);
         int res = authorisation(username, client);
-        if (res > 0) {
+        if (res >= 0) {
             sprintf(output, "%d\n", res);
         } else {
             if (res == -2) {
@@ -106,6 +106,14 @@ void cmd_handler(char* cmd, client_t* client, pid_t client_pid, char* output) {
             } else {
                 strcpy(output, "Reject UNAUTHORISED\n");
             }
+            sleep(1);
+            close(client->fd_c2s);
+            close(client->fd_s2c);
+            unlink(client->path_c2s);
+            unlink(client->path_s2c);
+            client->fd_c2s = -1;
+            client->fd_s2c = -1;
+
         }
         return;
     }
@@ -121,7 +129,7 @@ void cmd_handler(char* cmd, client_t* client, pid_t client_pid, char* output) {
         return;
     } 
 
-    // other cmd handling, for now just return -1
+    // 其他 Animate RPC 保留
     sprintf(output, "-1\n");
 }
 
@@ -135,53 +143,35 @@ void* worker_thread(void* arg) {
         
         client_task_t* task = task_head;
         task_head = task_head->next;
-        if (task_head == NULL) {
-            //rest tail if no more task
-            task_tail = NULL;
-        }
+        if (task_head == NULL) task_tail = NULL;
         pthread_mutex_unlock(&task_mutex);
 
         client_t* client = NULL;
         char output[BUFF] = {0};
-
-
-        for (int i = 0; i < BUFF ; i++) {
+        
+        for (int i = 0; i < num_clients; i++) {
             if (clients[i].client_pid == task->client_pid) {
                 client = &clients[i];
                 break;
             }
         }
-
         
-
         cmd_handler(task->cmd, client, task->client_pid, output);
 
-        //run will client exist
         if (client != NULL) {
             while (1) {
-                // ensure the res will be sent in order by client
                 if (task->task_id == client->next_res_id) {
-                    //return the res to client
                     write(task->fd_s2c, output, strlen(output));
                     
                     if (strstr(output, "Reject") != NULL || strstr(task->cmd, "Disconnect") != NULL) {
                         // if disconnect or login failed, close and clean up
                         usleep(5000);
-
-                        pthread_mutex_lock(&task_mutex);
-                        client->is_logged_in = 0;
                         close(client->fd_c2s);
                         close(client->fd_s2c);
                         unlink(client->path_c2s);
                         unlink(client->path_s2c);
                         client->fd_c2s = -1;
                         client->fd_s2c = -1;
-
-                        // remove the client from clients array
-                        memset(client, 0, sizeof(client_t));
-                        client->fd_c2s = -1;
-                        client->fd_s2c = -1;
-                        pthread_mutex_unlock(&task_mutex);
                     }
                     client->next_res_id++;
                     break;
@@ -208,11 +198,6 @@ int main(int argc, char** argv, char** envp) {
     pid_t pid = getpid();
     printf("Server PID: %d\n", pid);
     fflush(stdout);
-
-    for (int i = 0; i < BUFF; i++) {
-        clients[i].fd_c2s = -1;
-        clients[i].fd_s2c = -1;
-    }
 
     // setup signal handler
     struct sigaction sa;
@@ -252,7 +237,6 @@ int main(int argc, char** argv, char** envp) {
 
             if (fd_c2s != -1 && fd_s2c != -1) {
                 client_t new_client;
-                memset(&new_client, 0, sizeof(client_t));
                 new_client.client_pid = processing_pid;
                 new_client.fd_c2s = fd_c2s;
                 new_client.fd_s2c = fd_s2c;
@@ -264,18 +248,7 @@ int main(int argc, char** argv, char** envp) {
                 strcpy(new_client.path_c2s, path_c2s);
                 strcpy(new_client.path_s2c, path_s2c);
 
-
-                //pthread_mutex_lock(&task_mutex);
-                for (int i = 0; i < BUFF; i++) {
-                    //find the first empty slot for new client
-                    if (clients[i].client_pid == 0) {
-                        clients[i] = new_client;
-                        num_clients++;
-                        break;
-                    }
-                }
-                //pthread_mutex_unlock(&task_mutex);
-
+                clients[num_clients++] = new_client;
             } else {
                 if (fd_c2s != -1) close(fd_c2s);
                 if (fd_s2c != -1) close(fd_s2c);
@@ -290,7 +263,7 @@ int main(int argc, char** argv, char** envp) {
         fd_set read_fds;
         FD_ZERO(&read_fds);
         int max_fd = -1;
-        for (int i = 0; i < BUFF; i++) {
+        for (int i = 0; i < num_clients; i++) {
             if (clients[i].fd_c2s >= 0) {
                 FD_SET(clients[i].fd_c2s, &read_fds);
                 if (clients[i].fd_c2s > max_fd) max_fd = clients[i].fd_c2s;
@@ -307,8 +280,7 @@ int main(int argc, char** argv, char** envp) {
         
         if (waiting > 0) {
             char cmd[BUFF] = {0};
-            for (int i = 0; i < BUFF; i++) {
-                pthread_mutex_lock(&task_mutex);
+            for (int i = 0; i < num_clients; i++) {
                 if (clients[i].fd_c2s >= 0 && FD_ISSET(clients[i].fd_c2s, &read_fds)) {
                     ssize_t size_read = read(clients[i].fd_c2s, cmd, BUFF - 1);
                     if (size_read > 0) {
@@ -325,7 +297,7 @@ int main(int argc, char** argv, char** envp) {
                         clients[i].tasks_num++;
                         new_task->task_id = clients[i].tasks_num;
 
-                        
+                        pthread_mutex_lock(&task_mutex);
                         if (task_head == NULL) {
                             task_head = new_task; task_tail = new_task;
                         } else {
@@ -334,14 +306,12 @@ int main(int argc, char** argv, char** envp) {
                         pthread_cond_signal(&task_cond);
                         pthread_mutex_unlock(&task_mutex);
                     } else {
-                        // close and clean up if read error or client disconnected
+                        //hankdle error 
                         close(clients[i].fd_c2s); close(clients[i].fd_s2c);
                         unlink(clients[i].path_c2s); unlink(clients[i].path_s2c);
-                        memset(&clients[i], 0, sizeof(client_t));
-                        pthread_mutex_unlock(&task_mutex);
+                        for (int j = i; j < num_clients - 1; j++) clients[j] = clients[j + 1];
+                        num_clients--;
                     }
-                } else {
-                    pthread_mutex_unlock(&task_mutex);
                 }
             }
         }
