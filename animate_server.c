@@ -83,6 +83,7 @@ int using_placement_cnt = 0;
 
 void signal_handler(int sig, siginfo_t *info, void *ucontext){
     latest_client_pid = info->si_pid;
+    kill(latest_client_pid, SIGUSR2);
 }
 
 int authorisation (const char *username, pid_t client_pid){
@@ -302,7 +303,7 @@ int main(int argc, char** argv, char** envp) {
     printf("Server PID: %d\n", pid);
     fflush(stdout);
 
-    struct canvas* canvas = animate_create_canvas(100,100,0);
+    //struct canvas* canvas = animate_create_canvas(100,100,0);
     
     pthread_t* threads = malloc(sizeof(pthread_t) * atoi(argv[1]));
     if (threads == NULL){
@@ -340,7 +341,7 @@ int main(int argc, char** argv, char** envp) {
 
             mkfifo(path_c2s, 0666);
             mkfifo(path_s2c, 0666);
-            kill(latest_client_pid, SIGUSR2);
+            
             
 
             client_t new_client;
@@ -424,6 +425,7 @@ int main(int argc, char** argv, char** envp) {
                             clients[j] = clients[j+1];
                         }
                         num_clients--;
+                        i--;
                         pthread_mutex_unlock(&task_mutex);
                     }
                 }
@@ -431,7 +433,7 @@ int main(int argc, char** argv, char** envp) {
         }
     }
 
-    animate_destroy_canvas(canvas);
+    //animate_destroy_canvas(canvas);
     return 0;
 }
 
