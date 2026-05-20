@@ -145,7 +145,7 @@ void* worker_thread(void* arg) {
         char output[BUFF] = {0};
 
 
-        for (int i = 0; i < BUFF ; i++) {
+        for (int i = 0; i < num_clients; i++) {
             if (clients[i].client_pid == task->client_pid) {
                 client = &clients[i];
                 break;
@@ -207,11 +207,6 @@ int main(int argc, char** argv, char** envp) {
     pid_t pid = getpid();
     printf("Server PID: %d\n", pid);
     fflush(stdout);
-
-    for (int i = 0; i < BUFF; i++) {
-        clients[i].fd_c2s = -1;
-        clients[i].fd_s2c = -1;
-    }
 
     // setup signal handler
     struct sigaction sa;
