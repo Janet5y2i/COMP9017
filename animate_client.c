@@ -115,7 +115,7 @@ int main(int argc, char** argv, char** envp) {
                 if (res_size > 0){
                     res_buf[res_size] = '\0';
                     if (strcmp(res_buf, "Disconnected\n") == 0){
-                        printf("Disconnected from server.\n");
+                        //printf("Disconnected from server.\n");
                         break;
                     }
 
