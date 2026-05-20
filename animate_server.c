@@ -155,7 +155,6 @@ void* worker_thread(void* arg) {
                     if (strstr(output, "Reject") != NULL || strstr(task->cmd, "Disconnect") != NULL) {
                         usleep(5000);
 
-                        //pthread_mutex_lock(&task_mutex);
                         client->is_logged_in = 0;
                         close(client->fd_c2s);
                         close(client->fd_s2c);
@@ -166,7 +165,6 @@ void* worker_thread(void* arg) {
 
                         //
                         memset(client, 0, sizeof(client_t));
-                        //pthread_mutex_unlock(&task_mutex);
                     }
                     client->next_res_id++;
                     break;
@@ -242,8 +240,6 @@ int main(int argc, char** argv, char** envp) {
                 strcpy(new_client.path_c2s, path_c2s);
                 strcpy(new_client.path_s2c, path_s2c);
 
-                // 正如你所希望的：登入時，在 1024 大小內尋找第一個空置插槽直插進去！
-                pthread_mutex_lock(&task_mutex);
                 for (int i = 0; i < BUFF; i++) {
                     if (clients[i].client_pid == 0) {
                         clients[i] = new_client;
@@ -251,7 +247,6 @@ int main(int argc, char** argv, char** envp) {
                         break;
                     }
                 }
-                pthread_mutex_unlock(&task_mutex);
 
             } else {
                 if (fd_c2s != -1) close(fd_c2s);
@@ -313,10 +308,8 @@ int main(int argc, char** argv, char** envp) {
                         close(clients[i].fd_c2s); close(clients[i].fd_s2c);
                         unlink(clients[i].path_c2s); unlink(clients[i].path_s2c);
                         
-                        //pthread_mutex_lock(&task_mutex);
                         memset(&clients[i], 0, sizeof(client_t));
                         num_clients--;
-                        //pthread_mutex_unlock(&task_mutex);
                     }
                 }
             }
