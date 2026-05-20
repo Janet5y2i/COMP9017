@@ -245,7 +245,7 @@ int main(int argc, char** argv, char** envp) {
 
             if (fd_c2s != -1 && fd_s2c != -1) {
                 client_t new_client;
-                
+                memset(&new_client, 0, sizeof(client_t));
                 new_client.client_pid = processing_pid;
                 new_client.fd_c2s = fd_c2s;
                 new_client.fd_s2c = fd_s2c;
