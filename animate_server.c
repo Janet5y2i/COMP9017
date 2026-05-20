@@ -39,6 +39,7 @@ int main(int argc, char** argv, char** envp) {
 
     pid_t server_pid = atoi(argv[1]);
     printf("Server PID: %d\n", server_pid);
+    fflush(stdout);
     //second: send a signal to server(pid = server_pid)
     sigset_t new_mask, old_mask, wait_mask;
     struct sigaction sa;
