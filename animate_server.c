@@ -263,6 +263,8 @@ void* worker_thread(void* arg){
                 if (task->task_id == client->next_res_id){
                     if (strstr(output, "Disconnected") != NULL){
                         write(task->fd_s2c, output, strlen(output));
+                        //wait a minute to make sure the client receive the message before closing
+                        usleep(100);
                         close(client->fd_c2s);
                         close(client->fd_s2c);
                         unlink(client->path_c2s);

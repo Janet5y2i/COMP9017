@@ -114,7 +114,7 @@ int main(int argc, char** argv, char** envp) {
 
                 if (res_size > 0){
                     res_buf[res_size] = '\0';
-                    if (strcmp(res_buf, "Disconnected\n") == 0){
+                    if (strstr(res_buf, "Disconnected") != NULL){
                         //printf("Disconnected from server.\n");
                         break;
                     }
@@ -140,8 +140,9 @@ int main(int argc, char** argv, char** envp) {
 
                     fflush(stdout);
 
-                } 
-
+                } else if (size_read <= 0){
+                    break;
+                }
                 }
             }
         }
