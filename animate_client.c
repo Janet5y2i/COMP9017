@@ -131,7 +131,7 @@ int main(int argc, char** argv, char** envp) {
                         printf("Success %s\n", res_value);
                     }
 
-                    if (strstr(cmd_buf, "Disconnect") != NULL){
+                    if (strstr(cmd_buf, "Disconnect\n") != NULL){
                         break;
                     }
 
