@@ -174,7 +174,7 @@ void cmd_handler(char* cmd, client_t* client, pid_t client_pid, char* output){
         }
     }
     
-    if (strstr(cmd, "Disconnect") != NULL){
+    if (strstr(cmd, "Disconnect\n") != NULL){
         strcpy(output, "Disconnected\n");
         printf("Client %d disconnected.\n", client_pid);
         client->is_logged_in = 0;
