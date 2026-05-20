@@ -110,22 +110,24 @@ int main(int argc, char** argv, char** envp) {
                 write(fd_c2s, cmd_buf, strlen(cmd_buf));
                 char res_buf[BUFF];
                 ssize_t res_size = read(fd_s2c, res_buf, sizeof(res_buf)-1);
-                char res_value[BUFF];
+                char res_value[BUFF] = {0};
 
                 if (res_size > 0){
                     res_buf[res_size] = '\0';
-                    if (res_buf == "-1\n"){
+                    if (strcmp(res_buf, "-1\n") == 0){
                         printf("RPC Failed\n");
-                    } else if (res_buf == "-2\n"){
+                    } else if (strcmp(res_buf, "-2\n") == 0){
                         printf("Value error\n");
-                    } else if (res_buf == "-3\n"){
+                    } else if (strcmp(res_buf, "-3\n") == 0){
                         printf("Internal error\n");
                     } else if (strcmp(res_buf, "0\n") == 0){
                         printf("Success\n");
-                    } else if (strstr(res_buf, "0 ") != NULL){
-                        sscanf(res_buf, "0 %s\n", res_value);
+                    } else if (strncmp(res_buf, "0 ", 2) == 0){
+                        sscanf(res_buf, "0 %s", res_value);
                         printf("Success %s\n", res_value);
                     }
+
+                    fflush(stdout);
 
                 } 
 
