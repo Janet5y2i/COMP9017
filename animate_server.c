@@ -153,7 +153,7 @@ void* worker_thread(void* arg) {
                     write(task->fd_s2c, output, strlen(output));
                     
                     if (strstr(output, "Reject") != NULL || strstr(task->cmd, "Disconnect") != NULL) {
-                        usleep(5000);
+                        usleep(500);
 
                         client->is_logged_in = 0;
                         close(client->fd_c2s);
@@ -206,7 +206,7 @@ int main(int argc, char** argv, char** envp) {
     while (1) {
         pid_t processing_pid;
         
-        // 保持你原本最快速、絕對不逾時的 pause 判定條件
+        // 
         if (waiting_head == waiting_tail && num_clients == 0) {
             pause();
         }
