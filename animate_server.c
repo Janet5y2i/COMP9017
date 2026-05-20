@@ -354,8 +354,8 @@ int main(int argc, char** argv, char** envp) {
 
             client_t new_client;
             new_client.client_pid = latest_client_pid;
-            new_client.fd_c2s = open(path_c2s, O_RDWR);
-            new_client.fd_s2c = open(path_s2c, O_RDWR);
+            new_client.fd_c2s = open(path_c2s, O_RDWR | O_NONBLOCK);
+            new_client.fd_s2c = open(path_s2c, O_RDWR | O_NONBLOCK);
             new_client.is_logged_in = 0;
             new_client.username[0] = '\0';
             new_client.tasks_num = 0;
