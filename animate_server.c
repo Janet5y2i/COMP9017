@@ -179,7 +179,8 @@ void* worker_thread(void* arg) {
 
                         // remove the client from clients array
                         memset(client, 0, sizeof(client_t));
-                        num_clients--;
+                        client->fd_c2s = -1;
+                        client->fd_s2c = -1;
                         pthread_mutex_unlock(&task_mutex);
                     }
                     client->next_res_id++;
@@ -264,7 +265,7 @@ int main(int argc, char** argv, char** envp) {
                 strcpy(new_client.path_s2c, path_s2c);
 
 
-                pthread_mutex_lock(&task_mutex);
+                //pthread_mutex_lock(&task_mutex);
                 for (int i = 0; i < BUFF; i++) {
                     //find the first empty slot for new client
                     if (clients[i].client_pid == 0) {
@@ -273,7 +274,7 @@ int main(int argc, char** argv, char** envp) {
                         break;
                     }
                 }
-                pthread_mutex_unlock(&task_mutex);
+                //pthread_mutex_unlock(&task_mutex);
 
             } else {
                 if (fd_c2s != -1) close(fd_c2s);
