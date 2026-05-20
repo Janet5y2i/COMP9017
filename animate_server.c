@@ -98,7 +98,7 @@ void cmd_handler(char* cmd, client_t* client, pid_t client_pid, char* output) {
         char username[MAXUSERNAME];
         sscanf(cmd, "Login %s", username);
         int res = authorisation(username, client);
-        if (res >= 0) {
+        if (res > 0) {
             sprintf(output, "%d\n", res);
         } else {
             if (res == -2) {
