@@ -32,6 +32,7 @@ typedef struct{
     int next_res_id;
     //record the canvas client create;
     struct canvas* controlled_canvas[BUFF];
+    int controlled_canvas_cnt;
 } client_t;
 
 //record the clients info
@@ -116,6 +117,39 @@ int authorisation (const char *username, pid_t client_pid){
 
 }
 
+void create_canvas(client_t* client, pid_t client_pid, size_t w, size_t h, color_t c, char* output){
+    if (w == 0 || h == 0){
+        strcpy(output, "-2\n");
+        return;
+    }
+    struct canvas* canvas = animate_create_canvas(w, h, c);
+    if (canvas == NULL){
+        //internal error when creating
+        strcpy(output, "-3\n");
+        return;
+    }
+
+    //record the canvas, lock the mutex when modifying
+    pthread_mutex_lock(&task_mutex);
+    if (using_canvas_cnt < BUFF){
+        using_canvas[using_canvas_cnt].canvas = canvas;
+        using_canvas[using_canvas_cnt].client_pid = client_pid;
+        using_canvas[using_canvas_cnt].shared_cnt = 0;
+        using_canvas_cnt++;
+
+        client->controlled_canvas[client->controlled_canvas_cnt] = canvas;
+        client->controlled_canvas_cnt++;
+
+        uint64_t canvas_id = (unit64_t)canvas;
+        sprintf(output, "0 %lu\n", canvas_id);
+    } else {
+        sprintf(output, "-3\n");
+        //destroy the canvas if cannot record
+        animated_destroy_canvas(canvas); 
+    }
+
+    pthread_mutex_unlock(&task_mutex);
+}
 
 void cmd_handler(char* cmd, client_t* client, pid_t client_pid, char* output){
     int fd_s2c = client->fd_s2c;
@@ -142,7 +176,32 @@ void cmd_handler(char* cmd, client_t* client, pid_t client_pid, char* output){
         strcpy(output, "0\n");
         client->is_logged_in = 0;
         return;
-    } else if (strstr(cmd "") != NULL) {
+    } else if (strstr(cmd, "create_canvas") != NULL) {
+        uint64_t canvas_id;
+        size_t w, h
+        color_t c;
+        if (sscanf(cmd, "create_canvas %lu %zu %zu %zu", 
+            &w, &h, &c) == 3) {
+                create_canvas(client, client_pid, w, h, c, output);
+                return;
+        } else {
+            //invalid command format
+            sprintf(output, "-1\n")
+            return;
+        }
+
+    } else if (strstr(cmd, "generate") != NULL) {
+        
+        uint64_t canvas_id;
+        char filename[BUFF];
+        size_t start, end, frame_rate;
+        if (sscanf(cmd, "generate %lu %s %zu %zu %zu", 
+            &canvas_id, filename, &start, &end, &frame_rate) == 5) {
+                int res = generate_canvas(canvas_id, filename, start, end, frame_rate);
+                return;
+        } else {
+            return;
+        }
 
     } else {
         if (client->is_logged_in == 0){
@@ -195,7 +254,7 @@ void* worker_thread(void* arg){
                 usleep(100);
             }
         } else {
-            write(task->fd_s2c, "0\0", 2);
+            write(task->fd_s2c, "0\n\0", 2);
             
         }
 
@@ -269,6 +328,7 @@ int main(int argc, char** argv, char** envp) {
             new_client.tasks_num = 0;
             new_client.next_res_id = 1;
             new_client.controlled_canvas[0] = NULL;
+            new_client.controlled_canvas_cnt = 0;
             //reset the latest_client_pid
 
 
