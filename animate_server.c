@@ -85,12 +85,12 @@ int authorisation(const char *username, client_t* client) {
                 return balance;
             } else {
                 fclose(fptr);
-                return -2; // BALANCE <= 0
+                return -2; // balance <= 0
             }
         }
     }
     fclose(fptr);
-    return -1; // UNAUTHORISED
+    return -1; // unauthorize
 }
 
 void cmd_handler(char* cmd, client_t* client, pid_t client_pid, char* output) {
@@ -145,7 +145,7 @@ void* worker_thread(void* arg) {
         char output[BUFF] = {0};
 
 
-        for (int i = 0; i < num_clients; i++) {
+        for (int i = 0; i < BUFF; i++) {
             if (clients[i].client_pid == task->client_pid) {
                 client = &clients[i];
                 break;
@@ -168,7 +168,6 @@ void* worker_thread(void* arg) {
                         // if disconnect or login failed, close and clean up
                         usleep(5000);
 
-                        pthread_mutex_lock(&task_mutex);
                         client->is_logged_in = 0;
                         close(client->fd_c2s);
                         close(client->fd_s2c);
@@ -180,7 +179,6 @@ void* worker_thread(void* arg) {
                         // remove the client from clients array
                         memset(client, 0, sizeof(client_t));
                         num_clients--;
-                        pthread_mutex_unlock(&task_mutex);
                     }
                     client->next_res_id++;
                     break;
@@ -259,7 +257,6 @@ int main(int argc, char** argv, char** envp) {
                 strcpy(new_client.path_s2c, path_s2c);
 
 
-                pthread_mutex_lock(&task_mutex);
                 for (int i = 0; i < BUFF; i++) {
                     //find the first empty slot for new client
                     if (clients[i].client_pid == 0) {
@@ -268,7 +265,6 @@ int main(int argc, char** argv, char** envp) {
                         break;
                     }
                 }
-                pthread_mutex_unlock(&task_mutex);
 
             } else {
                 if (fd_c2s != -1) close(fd_c2s);
