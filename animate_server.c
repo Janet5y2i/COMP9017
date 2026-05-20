@@ -172,11 +172,20 @@ void cmd_handler(char* cmd, client_t* client, pid_t client_pid, char* output){
                 return;
             }
         }
-    } else if (strstr(cmd, "Disconnect") != NULL){
+    }
+    
+    if (strstr(cmd, "Disconnect") != NULL){
         strcpy(output, "0\n");
         client->is_logged_in = 0;
         return;
-    } else if (strstr(cmd, "create_canvas") != NULL) {
+    } 
+    
+    if (client->is_logged_in == 0){
+            strcpy(output, "Not logged in\n");
+            return;
+        }
+    
+    if (strstr(cmd, "create_canvas") != NULL) {
         uint64_t canvas_id;
         size_t w, h;
         color_t c;
@@ -190,7 +199,9 @@ void cmd_handler(char* cmd, client_t* client, pid_t client_pid, char* output){
             return;
         }
 
-    } else if (strstr(cmd, "generate") != NULL) {
+    }
+    
+    if (strstr(cmd, "generate") != NULL) {
         
         uint64_t canvas_id;
         char filename[BUFF];
@@ -203,13 +214,10 @@ void cmd_handler(char* cmd, client_t* client, pid_t client_pid, char* output){
             return;
         }
 
-    } else {
-        if (client->is_logged_in == 0){
-            strcpy(output, "Not logged in\n");
-            return;
-        }
     } 
 
+    sprintf(output, "-1\n");
+    return;
     }
 
 
