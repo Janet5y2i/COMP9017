@@ -10,7 +10,7 @@
 #include <pthread.h>
 
 #define BUFF 1024
-#define MAXUSERNAME 32+1
+#define MAXUSERNAME 32
 
 //initialize the flag
 volatile sig_atomic_t flag = 0;
@@ -110,11 +110,24 @@ int main(int argc, char** argv, char** envp) {
                 write(fd_c2s, cmd_buf, strlen(cmd_buf));
                 char res_buf[BUFF];
                 ssize_t res_size = read(fd_s2c, res_buf, sizeof(res_buf)-1);
+                char res_value[BUFF];
 
                 if (res_size > 0){
                     res_buf[res_size] = '\0';
+                    if (res_buf == "-1\n"){
+                        printf("RPC Failed\n")
+                    } else if (res_buf == "-2\n"){
+                        printf("Value error\n");
+                    } else if (res_buf == "-3\n"){
+                        printf("Internal error\n");
+                    } else if (strcmp(res_buf, "0\n") == 0){
+                        printf("Success\n");
+                    } else if (strstr(res_buf, "0 ") != NULL){
+                        sscanf(res_buf, "0 %s\n", res_value);
+                        printf("Success %s\n", res_value);
+                    }
 
-                }
+                } 
 
                 }
             }

@@ -140,12 +140,12 @@ void create_canvas(client_t* client, pid_t client_pid, size_t w, size_t h, color
         client->controlled_canvas[client->controlled_canvas_cnt] = canvas;
         client->controlled_canvas_cnt++;
 
-        uint64_t canvas_id = (unit64_t)canvas;
+        uint64_t canvas_id = (uint64_t)canvas;
         sprintf(output, "0 %lu\n", canvas_id);
     } else {
         sprintf(output, "-3\n");
         //destroy the canvas if cannot record
-        animated_destroy_canvas(canvas); 
+        animate_destroy_canvas(canvas); 
     }
 
     pthread_mutex_unlock(&task_mutex);
@@ -178,7 +178,7 @@ void cmd_handler(char* cmd, client_t* client, pid_t client_pid, char* output){
         return;
     } else if (strstr(cmd, "create_canvas") != NULL) {
         uint64_t canvas_id;
-        size_t w, h
+        size_t w, h;
         color_t c;
         if (sscanf(cmd, "create_canvas %lu %zu %zu %zu", 
             &w, &h, &c) == 3) {
@@ -186,7 +186,7 @@ void cmd_handler(char* cmd, client_t* client, pid_t client_pid, char* output){
                 return;
         } else {
             //invalid command format
-            sprintf(output, "-1\n")
+            sprintf(output, "-1\n");
             return;
         }
 
