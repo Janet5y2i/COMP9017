@@ -306,7 +306,7 @@ int main(int argc, char** argv, char** envp) {
     
     pthread_t* threads = malloc(sizeof(pthread_t) * atoi(argv[1]));
     if (threads == NULL){
-        fprintf(stderr, "Failed to allocate memory for threads.\n");
+        //fprintf(stderr, "Failed to allocate memory for threads.\n");
         return 1;
     }
 
@@ -346,7 +346,7 @@ int main(int argc, char** argv, char** envp) {
             client_t new_client;
             new_client.client_pid = latest_client_pid;
             new_client.fd_c2s = open(path_c2s, O_RDONLY | O_NONBLOCK);
-            new_client.fd_s2c = open(path_s2c, O_WRONLY);
+            new_client.fd_s2c = open(path_s2c, O_WRONLY | O_NONBLOCK);
             new_client.is_logged_in = 0;
             new_client.username[0] = '\0';
             new_client.tasks_num = 0;
