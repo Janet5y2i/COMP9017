@@ -20,6 +20,7 @@ void signalHandler(int sig, siginfo_t *info, void *ucontext){
     pid_t server_pid = info->si_pid;
     printf("signal received from: %d.\n", server_pid);
     flag = 1;
+    kill(server_pid, SIGUSR1);
 
 }
 
@@ -54,7 +55,7 @@ int main(int argc, char** argv, char** envp) {
     sigaction(SIGUSR2, &sa, NULL);
 
     //first send sigusr1 to server
-    kill(server_pid, SIGUSR1);
+    //kill(server_pid, SIGUSR1);
 
     //third wait for sigusr2 receving SIDUSR2, execute the handler
     
