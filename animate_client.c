@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
 
     sigemptyset(&new_mask);
     sigaddset(&new_mask, SIGUSR2);
-    sigprocmask(SIG_BLOCK, &wait_mask, &old_mask);
+    sigprocmask(SIG_BLOCK, &new_mask, &old_mask);
 
     //send sigusr1 to server
     kill(server_pid, SIGUSR1);
