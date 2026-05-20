@@ -161,5 +161,6 @@ int main(int argc, char** argv, char** envp) {
     close(fd_s2c);
     unlink(path_c2s);
     unlink(path_s2c);
+    exit(0);
     return 0;
 }
