@@ -225,8 +225,8 @@ int main(int argc, char** argv, char** envp) {
             unlink(path_s2c);
             mkfifo(path_c2s, 0666); 
             mkfifo(path_s2c, 0666);
-            int fd_c2s = open(path_c2s, O_RDONLY | O_NONBLOCK);
-            int fd_s2c = open(path_s2c, O_WRONLY | O_NONBLOCK);
+            int fd_c2s = open(path_c2s, O_RDWR | O_NONBLOCK);
+            int fd_s2c = open(path_s2c, O_RDWR | O_NONBLOCK);
 
             if (fd_c2s != -1 && fd_s2c != -1) {
                 client_t new_client;
