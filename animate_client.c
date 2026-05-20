@@ -85,7 +85,7 @@ int main(int argc, char** argv, char** envp) {
                     res_buf[res_size] = '\0';
                     
                     // 健壯性：包含 Disconnected 就直接安全 break 退出進程
-                    if (strstr(res_buf, "Disconnected") != NULL) {
+                    if (strcmp(res_buf, "0\n") == 0 && strstr(cmd_buf, "Disconnect") != NULL) {
                         printf("Success\n");
                         fflush(stdout);
                         break; 

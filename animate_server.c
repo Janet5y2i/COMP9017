@@ -104,7 +104,7 @@ void cmd_handler(char* cmd, client_t* client, pid_t client_pid, char* output){
     }
     
     if (strstr(cmd, "Disconnect") != NULL){
-        strcpy(output, "Disconnected\n");
+        strcpy(output, "0\n");
         client->is_logged_in = 0;
         return;
     } 
@@ -161,9 +161,9 @@ void* worker_thread(void* arg){
         if (client != NULL){
             while (1){
                 if (task->task_id == client->next_res_id){
-                    if (strstr(output, "Disconnected") != NULL){
+                    if (strcmp(output, "0\n") == 0 && strstr(task->cmd, "Disconnect") != NULL){
                         write(task->fd_s2c, output, strlen(output));
-                        usleep(10000); // 確保資料送出
+                        usleep(500); 
                         close(client->fd_c2s);
                         close(client->fd_s2c);
                         unlink(client->path_c2s);
@@ -191,7 +191,7 @@ void* worker_thread(void* arg){
             }
         } else {
 
-            write(task->fd_s2c, "Disconnected\n", 13);
+            write(task->fd_s2c, "0\n", 2);
         }
         free(task);
     }
@@ -291,7 +291,15 @@ int main(int argc, char** argv, char** envp) {
                         }
                         pthread_cond_signal(&task_cond);
                     } else if (size_read == 0 || (size_read < 0 && errno != EAGAIN)) {
+                        int found = 0;
+                        for (int j = 0; j < num_clients; j++) {
+                            if (clients[j].fd_c2s == clients[i].fd_c2s) {
+                                found = 1;
+                                break;
+                            }
+                        }
 
+                        if (found) {
                         close(clients[i].fd_c2s);
                         close(clients[i].fd_s2c);
                         unlink(clients[i].path_c2s);
@@ -309,4 +317,5 @@ int main(int argc, char** argv, char** envp) {
     }
     free(threads);
     return 0;
+}
 }
