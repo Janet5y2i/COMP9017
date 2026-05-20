@@ -78,9 +78,9 @@ int main(int argc, char** argv, char** envp) {
 
     int fd_c2s = -1;
     while (1){
-        int fd_c2s = open(path_c2s, O_WRONLY); //write only
+        fd_c2s = open(path_c2s, O_WRONLY); //write only
         if (fd_c2s == -1 && errno == ENOENT) {
-            usleep(1000); // 睡 1 毫秒繼續嘗試
+            usleep(1000);
             continue;
         }
         break;
