@@ -16,8 +16,11 @@
 pthread_mutex_t task_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t task_cond = PTHREAD_COND_INITIALIZER;
 
-// 全域變數，用於跨執行緒傳遞新連線
-volatile sig_atomic_t latest_client_pid = 0;
+
+volatile sig_atomic_t waiting_connections[BUFF];
+volatile sig_atomic_t waiting_head = 0;
+volatile sig_atomic_t waiting_tail = 0;
+
 
 typedef struct {
     pid_t client_pid;
@@ -48,20 +51,24 @@ typedef struct client_task {
 client_task_t* task_head = NULL;
 client_task_t* task_tail = NULL;
 
-// ==========================================
-// 1. 終極優化：非同步訊號秒回常式
-// ==========================================
+
 void signal_handler(int sig, siginfo_t *info, void *ucontext) {
     (void)sig; (void)ucontext;
-    pid_t pid = info->si_pid;
-    latest_client_pid = pid;
+    pid_t clinet_pid = info->si_pid;
     
-    // 【金鐘罩修正】：收到 SIGUSR1 的當下，在 0 微秒內直接把 SIGUSR2 轟回去！
-    // 這樣不論 main 執行緒是在建立 pthread 還是在初始化，Client 都絕對不會判定超時！
-    kill(pid, SIGUSR2);
+    // return SIGUSR2
+    
+    kill(clinet_pid, SIGUSR2);
+
+    // add to waiting queue
+    sig_atomic_t next_waiting_tail = (waiting_tail + 1) % BUFF;
+    if (next_waiting_tail != waiting_head) {
+        waiting_connections[waiting_tail] = clinet_pid;
+        waiting_tail = next_waiting_tail;
+    }
+    
 }
 
-// 帳號密碼比對
 int authorisation(const char *username, pid_t client_pid) {
     FILE *fptr = fopen("users.txt", "r");
     if (fptr == NULL) return -3;
@@ -150,7 +157,7 @@ void* worker_thread(void* arg) {
                     write(task->fd_s2c, output, strlen(output));
                     
                     if (strstr(output, "Reject") != NULL || strstr(task->cmd, "Disconnect") != NULL) {
-                        // 如果是拒絕登入或斷開，延遲後在背景回收管道
+                        // if disconnect or login failed, close and clean up
                         usleep(5000);
                         close(client->fd_c2s);
                         close(client->fd_s2c);
@@ -179,21 +186,20 @@ int main(int argc, char** argv, char** envp) {
         return 1;
     }
 
-    // 加上金鐘罩護盾，防止 Client 暴斃引發 SIGPIPE 帶走 Server
     signal(SIGPIPE, SIG_IGN);
 
     pid_t pid = getpid();
     printf("Server PID: %d\n", pid);
     fflush(stdout);
 
-    // 設定訊號監聽
+    // setup signal handler
     struct sigaction sa;
     sa.sa_sigaction = signal_handler;
     sa.sa_flags = SA_SIGINFO;
     sigemptyset(&sa.sa_mask);
     sigaction(SIGUSR1, &sa, NULL);
 
-    // 啟動 Thread Pool
+    // strat worker thereads
     int pool_size = atoi(argv[1]);
     pthread_t* threads = malloc(sizeof(pthread_t) * pool_size);
     for (int i = 0; i < pool_size; i++) {
@@ -201,29 +207,32 @@ int main(int argc, char** argv, char** envp) {
     }
 
     while (1) {
-        // 如果目前沒有任何任務，優雅地用 pause 卡住等訊號，降低 CPU 使用率
-        if (latest_client_pid == 0 && num_clients == 0) {
+        pid_t processing_pid;
+        // paus when no cleint
+        if (waiting_head == waiting_tail && num_clients == 0) {
             pause();
         }
 
-        // 2. 處理新進連線的管道建立
-        if (latest_client_pid != 0 && num_clients < BUFF) {
+        if (waiting_head != waiting_tail && num_clients < BUFF) {
+            processing_pid = waiting_connections[waiting_head];
+            waiting_head = (waiting_head + 1) % BUFF;
+            
             char path_c2s[BUFF], path_s2c[BUFF];
-            sprintf(path_c2s, "FIFO_C2S_%d", latest_client_pid);
-            sprintf(path_s2c, "FIFO_S2C_%d", latest_client_pid);
+            sprintf(path_c2s, "FIFO_C2S_%d", processing_pid);
+            sprintf(path_s2c, "FIFO_S2C_%d", processing_pid);
 
-            unlink(path_c2s); unlink(path_s2c);
-            mkfifo(path_c2s, 0666); mkfifo(path_s2c, 0666);
+            unlink(path_c2s); 
+            unlink(path_s2c);
+            mkfifo(path_c2s, 0666); 
+            mkfifo(path_s2c, 0666);
+            int fd_c2s = open(path_c2s, O_RDONLY | O_NONBLOCK);
+            int fd_s2c = open(path_s2c, O_WRONLY | O_NONBLOCK);
 
-            // 【核心修正點】：全部改用 O_RDWR | O_NONBLOCK 安全開啟，絕對不卡死 main 執行緒
-            int fd_c2 = open(path_c2s, O_RDWR | O_NONBLOCK);
-            int fd_s2 = open(path_s2c, O_RDWR | O_NONBLOCK);
-
-            if (fd_c2 != -1 && fd_s2 != -1) {
+            if (fd_c2s != -1 && fd_s2c != -1) {
                 client_t new_client;
-                new_client.client_pid = latest_client_pid;
-                new_client.fd_c2s = fd_c2;
-                new_client.fd_s2c = fd_s2;
+                new_client.client_pid = processing_pid;
+                new_client.fd_c2s = fd_c2s;
+                new_client.fd_s2c = fd_s2c;
                 new_client.is_logged_in = 0;
                 new_client.username[0] = '\0';
                 new_client.tasks_num = 0;
@@ -233,11 +242,17 @@ int main(int argc, char** argv, char** envp) {
                 strcpy(new_client.path_s2c, path_s2c);
 
                 clients[num_clients++] = new_client;
+            } else {
+                if (fd_c2s != -1) close(fd_c2s);
+                if (fd_s2c != -1) close(fd_s2c);
+                unlink(path_c2s); 
+                unlink(path_s2c);
             }
-            latest_client_pid = 0; // 重設
-        }
+        
+        } 
 
-        // 3. 多路複用監聽所有 Client 的 RPC 輸入
+
+        // multiple clients handling with select
         fd_set read_fds;
         FD_ZERO(&read_fds);
         int max_fd = -1;
@@ -253,7 +268,7 @@ int main(int argc, char** argv, char** envp) {
             continue;
         }
 
-        struct timeval tv = {0, 10000}; // 10ms 快速響應
+        struct timeval tv = {0, 10000}; 
         int waiting = select(max_fd + 1, &read_fds, NULL, NULL, &tv);
         
         if (waiting > 0) {
