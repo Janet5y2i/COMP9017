@@ -34,7 +34,9 @@ typedef struct {
     int controlled_canvas_cnt;
 } client_t;
 
+//
 client_t clients[BUFF];
+int num_clients = 0;
 
 typedef struct client_task {
     char cmd[BUFF];
@@ -47,6 +49,7 @@ typedef struct client_task {
 
 client_task_t* task_head = NULL;
 client_task_t* task_tail = NULL;
+
 
 void signal_handler(int sig, siginfo_t *info, void *ucontext) {
     (void)sig; (void)ucontext;
@@ -135,14 +138,12 @@ void* worker_thread(void* arg) {
         char output[BUFF] = {0};
 
         // 
-        pthread_mutex_lock(&task_mutex);
         for (int i = 0; i < BUFF; i++) {
             if (clients[i].client_pid == task->client_pid) {
                 client = &clients[i];
                 break;
             }
         }
-        pthread_mutex_unlock(&task_mutex);
 
         cmd_handler(task->cmd, client, task->client_pid, output);
 
@@ -155,19 +156,19 @@ void* worker_thread(void* arg) {
                         usleep(5000);
 
                         pthread_mutex_lock(&task_mutex);
+                        client->is_logged_in = 0;
                         close(client->fd_c2s);
                         close(client->fd_s2c);
                         unlink(client->path_c2s);
                         unlink(client->path_s2c);
-
-                        // 
-                        memset(client, 0, sizeof(client_t));
                         client->fd_c2s = -1;
                         client->fd_s2c = -1;
+
+                        // 正如你所希望的：Reject 或 Disconnect 時原地清空該 Slot，不引發陣列平移
+                        memset(client, 0, sizeof(client_t));
                         pthread_mutex_unlock(&task_mutex);
-                    } else {
-                        client->next_res_id++;
                     }
+                    client->next_res_id++;
                     break;
                 }
                 usleep(100);
@@ -192,12 +193,6 @@ int main(int argc, char** argv, char** envp) {
     printf("Server PID: %d\n", getpid());
     fflush(stdout);
 
-    // 強制初始化：將所有未啟用的插槽 fd 設定為 -1，防禦 select 誤聽 stdin (0)
-    for (int i = 0; i < BUFF; i++) {
-        clients[i].fd_c2s = -1;
-        clients[i].fd_s2c = -1;
-    }
-
     struct sigaction sa;
     sa.sa_sigaction = signal_handler;
     sa.sa_flags = SA_SIGINFO;
@@ -213,22 +208,12 @@ int main(int argc, char** argv, char** envp) {
     while (1) {
         pid_t processing_pid;
         
-        // 
-        pthread_mutex_lock(&task_mutex);
-        int active_clients = 0;
-        for (int i = 0; i < BUFF; i++) {
-            if (clients[i].client_pid != 0) {
-                active_clients++;
-            }
-        }
-        if (waiting_head == waiting_tail && active_clients == 0) {
-            pthread_mutex_unlock(&task_mutex);
+        // 保持你原本最快速、絕對不逾時的 pause 判定條件
+        if (waiting_head == waiting_tail && num_clients == 0) {
             pause();
-        } else {
-            pthread_mutex_unlock(&task_mutex);
         }
 
-        if (waiting_head != waiting_tail) {
+        if (waiting_head != waiting_tail && num_clients < BUFF) {
             processing_pid = waiting_connections[waiting_head];
             waiting_head = (waiting_head + 1) % BUFF;
             
@@ -257,10 +242,12 @@ int main(int argc, char** argv, char** envp) {
                 strcpy(new_client.path_c2s, path_c2s);
                 strcpy(new_client.path_s2c, path_s2c);
 
+                // 正如你所希望的：登入時，在 1024 大小內尋找第一個空置插槽直插進去！
                 pthread_mutex_lock(&task_mutex);
                 for (int i = 0; i < BUFF; i++) {
                     if (clients[i].client_pid == 0) {
                         clients[i] = new_client;
+                        num_clients++; // 只有在這裡增加計數，維持你原本主迴圈運行的邊界
                         break;
                     }
                 }
@@ -274,19 +261,16 @@ int main(int argc, char** argv, char** envp) {
             }
         } 
 
-        //
+        // 
         fd_set read_fds;
         FD_ZERO(&read_fds);
         int max_fd = -1;
-        
-        pthread_mutex_lock(&task_mutex);
         for (int i = 0; i < BUFF; i++) {
             if (clients[i].client_pid != 0 && clients[i].fd_c2s >= 0) {
                 FD_SET(clients[i].fd_c2s, &read_fds);
                 if (clients[i].fd_c2s > max_fd) max_fd = clients[i].fd_c2s;
             }
         }
-        pthread_mutex_unlock(&task_mutex);
 
         if (max_fd < 0) {
             usleep(1000);
@@ -299,7 +283,7 @@ int main(int argc, char** argv, char** envp) {
         if (waiting > 0) {
             char cmd[BUFF] = {0};
             for (int i = 0; i < BUFF; i++) {
-                pthread_mutex_lock(&task_mutex);
+                //
                 if (clients[i].client_pid != 0 && clients[i].fd_c2s >= 0 && FD_ISSET(clients[i].fd_c2s, &read_fds)) {
                     ssize_t size_read = read(clients[i].fd_c2s, cmd, BUFF - 1);
                     if (size_read > 0) {
@@ -316,6 +300,7 @@ int main(int argc, char** argv, char** envp) {
                         clients[i].tasks_num++;
                         new_task->task_id = clients[i].tasks_num;
 
+                        pthread_mutex_lock(&task_mutex);
                         if (task_head == NULL) {
                             task_head = new_task; task_tail = new_task;
                         } else {
@@ -324,16 +309,15 @@ int main(int argc, char** argv, char** envp) {
                         pthread_cond_signal(&task_cond);
                         pthread_mutex_unlock(&task_mutex);
                     } else {
-                        
+                        // 異常中斷處理
                         close(clients[i].fd_c2s); close(clients[i].fd_s2c);
                         unlink(clients[i].path_c2s); unlink(clients[i].path_s2c);
+                        
+                        pthread_mutex_lock(&task_mutex);
                         memset(&clients[i], 0, sizeof(client_t));
-                        clients[i].fd_c2s = -1;
-                        clients[i].fd_s2c = -1;
+                        num_clients--;
                         pthread_mutex_unlock(&task_mutex);
                     }
-                } else {
-                    pthread_mutex_unlock(&task_mutex);
                 }
             }
         }
