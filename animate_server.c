@@ -83,7 +83,7 @@ int using_placement_cnt = 0;
 
 void signal_handler(int sig, siginfo_t *info, void *ucontext){
     latest_client_pid = info->si_pid;
-    kill(latest_client_pid, SIGUSR2);
+    
 }
 
 int authorisation (const char *username, pid_t client_pid){
@@ -343,7 +343,7 @@ int main(int argc, char** argv, char** envp) {
             mkfifo(path_s2c, 0666);
             
             
-
+            kill(latest_client_pid, SIGUSR2);
             client_t new_client;
             new_client.client_pid = latest_client_pid;
             new_client.fd_c2s = open(path_c2s, O_RDONLY | O_NONBLOCK);
