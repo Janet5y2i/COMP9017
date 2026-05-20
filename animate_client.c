@@ -114,6 +114,11 @@ int main(int argc, char** argv, char** envp) {
 
                 if (res_size > 0){
                     res_buf[res_size] = '\0';
+                    if (strcmp(res_buf, "0\n") == 0 && strcmp(cmd_buf, "Disconnect\n") == 0){
+                        printf("Disconnected from server.\n");
+                        break;
+                    }
+
                     if (strcmp(res_buf, "-1\n") == 0){
                         printf("RPC Failed\n");
                     }
@@ -131,9 +136,7 @@ int main(int argc, char** argv, char** envp) {
                         printf("Success %s\n", res_value);
                     }
 
-                    if (strstr(res_buf, "Disconnected\n") != NULL){
-                        break;
-                    }
+                    
 
                     fflush(stdout);
 

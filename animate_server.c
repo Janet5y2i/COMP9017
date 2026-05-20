@@ -174,20 +174,22 @@ void cmd_handler(char* cmd, client_t* client, pid_t client_pid, char* output){
         }
     }
     
-    if (strstr(cmd, "Disconnect\n") != NULL){
-        strcpy(output, "Disconnected\n");
-        printf("Client %d disconnected.\n", client_pid);
-        client->is_logged_in = 0;
-        close(fd_c2s);
-        close(fd_s2c);
-        return;
-    } 
+    
     
     if (client->is_logged_in == 0){
             strcpy(output, "Not logged in\n");
             return;
         }
     
+    if (strstr(cmd, "Disconnect") != NULL){
+        strcpy(output, "0\n");
+        printf("Client %d disconnected.\n", client_pid);
+        client->is_logged_in = 0;
+        close(fd_c2s);
+        close(fd_s2c);
+        return;
+    } 
+
     if (strstr(cmd, "create_canvas") != NULL) {
         uint64_t canvas_id;
         size_t w, h;
