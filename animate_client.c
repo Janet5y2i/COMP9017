@@ -17,8 +17,8 @@ volatile sig_atomic_t flag = 0;
 
 //when receiving sigusr2, update flag and open fifo
 void signalHandler(int sig, siginfo_t *info, void *ucontext){
-    //pid_t server_pid = info->si_pid;
-    //printf("signal received from: %d.\n", server_pid);
+    pid_t server_pid = info->si_pid;
+    printf("signal received from: %d.\n", server_pid);
     flag = 1;
 
 }

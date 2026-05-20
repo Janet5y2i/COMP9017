@@ -299,7 +299,7 @@ int main(int argc, char** argv, char** envp) {
                         pthread_cond_signal(&task_cond);
                         pthread_mutex_unlock(&task_mutex);
                     } else {
-                        // error`handle
+                        // error or diconnect handler
                         close(clients[i].fd_c2s); close(clients[i].fd_s2c);
                         unlink(clients[i].path_c2s); unlink(clients[i].path_s2c);
                         for (int j = i; j < num_clients - 1; j++) clients[j] = clients[j + 1];
