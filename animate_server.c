@@ -325,7 +325,9 @@ int main(int argc, char** argv, char** envp) {
     //prevent the code end before receiving reply
     while(1){
         //pause();
-
+        if (latest_client_pid == 0){
+            pause();
+        }
         if (latest_client_pid != 0 && num_clients < BUFF){
             kill(latest_client_pid, SIGUSR2);
             //after receiving signal back to the program
