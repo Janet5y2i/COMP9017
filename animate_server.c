@@ -69,7 +69,7 @@ void signal_handler(int sig, siginfo_t *info, void *ucontext) {
     
 }
 
-int authorisation(const char *username, pid_t client_pid) {
+int authorisation(const char *username, client_t* client) {
     FILE *fptr = fopen("users.txt", "r");
     if (fptr == NULL) return -3;
 
@@ -77,18 +77,14 @@ int authorisation(const char *username, pid_t client_pid) {
     int balance;
     while (fscanf(fptr, "%s %d", user, &balance) != EOF) {
         if (strcmp(username, user) == 0) {
-            fclose(fptr);
+            strncpy(client->username, username, MAXUSERNAME - 1);
+            client->username[MAXUSERNAME - 1] = '\0';
             if (balance > 0) {
-                for (int i = 0; i < num_clients; i++) {
-                    if (clients[i].client_pid == client_pid) {
-                        clients[i].is_logged_in = 1;
-                        strncpy(clients[i].username, username, MAXUSERNAME - 1);
-                        clients[i].username[MAXUSERNAME - 1] = '\0';
-                        break;
-                    }
-                }
+                client->is_logged_in = 1;
+                fclose(fptr);
                 return balance;
             } else {
+                fclose(fptr);
                 return -2; // BALANCE <= 0
             }
         }
@@ -101,12 +97,23 @@ void cmd_handler(char* cmd, client_t* client, pid_t client_pid, char* output) {
     if (strstr(cmd, "Login") != NULL) {
         char username[MAXUSERNAME];
         sscanf(cmd, "Login %s", username);
-        int res = authorisation(username, client_pid);
+        int res = authorisation(username, client);
         if (res >= 0) {
             sprintf(output, "%d\n", res);
         } else {
-            if (res == -2) strcpy(output, "Reject BALANCE\n");
-            else strcpy(output, "Reject UNAUTHORISED\n");
+            if (res == -2) {
+                strcpy(output, "Reject BALANCE\n");
+            } else {
+                strcpy(output, "Reject UNAUTHORISED\n");
+            }
+            sleep(1);
+            close(client->fd_c2s);
+            close(client->fd_s2c);
+            unlink(client->path_c2s);
+            unlink(client->path_s2c);
+            client->fd_c2s = -1;
+            client->fd_s2c = -1;
+
         }
         return;
     }
@@ -180,7 +187,7 @@ void* worker_thread(void* arg) {
 }
 
 int main(int argc, char** argv, char** envp) {
-    (void)envp;
+
     if (argc < 2) {
         fprintf(stderr, "Usage: %s <threadpool size>\n", argv[0]);
         return 1;
@@ -208,7 +215,7 @@ int main(int argc, char** argv, char** envp) {
 
     while (1) {
         pid_t processing_pid;
-        // paus when no cleint
+        // pause when no cleint
         if (waiting_head == waiting_tail && num_clients == 0) {
             pause();
         }
