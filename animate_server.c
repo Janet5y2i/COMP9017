@@ -26,6 +26,8 @@ typedef struct{
     pid_t client_pid;
     int fd_c2s;
     int fd_s2c;
+    char path_c2s[BUFF];
+    char path_s2c[BUFF];
     char username[MAXUSERNAME];
     int is_logged_in;
     int tasks_num;
@@ -259,6 +261,14 @@ void* worker_thread(void* arg){
         if (client != NULL){
             while (1){
                 if (task->task_id == client->next_res_id){
+                    if (strstr(output, "Disconnected") != NULL){
+                        write(task->fd_s2c, output, strlen(output));
+                        close(client->fd_c2s);
+                        close(client->fd_s2c);
+                        unlink(client->path_c2s);
+                        unlink(client->path_s2c);
+                        break;
+                    }
                     write(task->fd_s2c, output, strlen(output));
                     client->next_res_id++;
                     break;
@@ -342,6 +352,10 @@ int main(int argc, char** argv, char** envp) {
             new_client.next_res_id = 1;
             new_client.controlled_canvas[0] = NULL;
             new_client.controlled_canvas_cnt = 0;
+            strncpy(new_client.path_c2s, path_c2s, BUFF - 1);
+            new_client.path_c2s[BUFF - 1] = '\0';
+            strncpy(new_client.path_s2c, path_s2c, BUFF - 1);
+            new_client.path_s2c[BUFF - 1] = '\0';
             //reset the latest_client_pid
 
 
