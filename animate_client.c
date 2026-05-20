@@ -116,15 +116,23 @@ int main(int argc, char** argv, char** envp) {
                     res_buf[res_size] = '\0';
                     if (strcmp(res_buf, "-1\n") == 0){
                         printf("RPC Failed\n");
-                    } else if (strcmp(res_buf, "-2\n") == 0){
+                    }
+                    if (strcmp(res_buf, "-2\n") == 0){
                         printf("Value error\n");
-                    } else if (strcmp(res_buf, "-3\n") == 0){
+                    }
+                    if (strcmp(res_buf, "-3\n") == 0){
                         printf("Internal error\n");
-                    } else if (strcmp(res_buf, "0\n") == 0){
+                    }
+                    if (strcmp(res_buf, "0\n") == 0){
                         printf("Success\n");
-                    } else if (strncmp(res_buf, "0 ", 2) == 0){
+                    }
+                    if (strncmp(res_buf, "0 ", 2) == 0){
                         sscanf(res_buf, "0 %s", res_value);
                         printf("Success %s\n", res_value);
+                    }
+
+                    if (strstr(cmd_buf, "Disconnect") != NULL){
+                        break;
                     }
 
                     fflush(stdout);
