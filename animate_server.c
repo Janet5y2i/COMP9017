@@ -106,14 +106,6 @@ void cmd_handler(char* cmd, client_t* client, pid_t client_pid, char* output) {
             } else {
                 strcpy(output, "Reject UNAUTHORISED\n");
             }
-            sleep(1);
-            close(client->fd_c2s);
-            close(client->fd_s2c);
-            unlink(client->path_c2s);
-            unlink(client->path_s2c);
-            client->fd_c2s = -1;
-            client->fd_s2c = -1;
-
         }
         return;
     }
@@ -129,7 +121,7 @@ void cmd_handler(char* cmd, client_t* client, pid_t client_pid, char* output) {
         return;
     } 
 
-    // 其他 Animate RPC 保留
+    // other cmd handling, for now just return -1
     sprintf(output, "-1\n");
 }
 
@@ -165,7 +157,7 @@ void* worker_thread(void* arg) {
                     
                     if (strstr(output, "Reject") != NULL || strstr(task->cmd, "Disconnect") != NULL) {
                         // if disconnect or login failed, close and clean up
-                        usleep(5000);
+                        sleep(1);
                         close(client->fd_c2s);
                         close(client->fd_s2c);
                         unlink(client->path_c2s);
@@ -306,7 +298,7 @@ int main(int argc, char** argv, char** envp) {
                         pthread_cond_signal(&task_cond);
                         pthread_mutex_unlock(&task_mutex);
                     } else {
-                        // 異常中斷處理
+                        // close and clean up if read error or client disconnected
                         close(clients[i].fd_c2s); close(clients[i].fd_s2c);
                         unlink(clients[i].path_c2s); unlink(clients[i].path_s2c);
                         for (int j = i; j < num_clients - 1; j++) clients[j] = clients[j + 1];
