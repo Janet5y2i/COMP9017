@@ -76,26 +76,14 @@ int main(int argc, char** argv, char** envp) {
     sprintf(path_c2s, "FIFO_C2S_%d", client_pid);
     sprintf(path_s2c, "FIFO_S2C_%d", client_pid);
 
-    int fd_c2s = -1;
-    while (1){
-        int fd_c2s = open(path_c2s, O_WRONLY);//write only
-        if (fd_c2s == -1 && errno == ENOENT) {
-            usleep(1000); 
-            continue;
-        }
-        usleep(1000);
-    }
-
-    int fd_s2c = open(path_s2c, O_RDONLY); //read only
-
     //send login message to server, get login cmd from user
     fgets(req, BUFF, stdin);
     //get username from stdin
     sscanf(req, "Login %s\n", username);
     
     //open fifo based on the path
-    //int fd_c2s = open(path_c2s, O_WRONLY); 
-    
+    int fd_c2s = open(path_c2s, O_WRONLY); //write only
+    int fd_s2c = open(path_s2c, O_RDONLY); //read only
 
 
 
@@ -161,6 +149,5 @@ int main(int argc, char** argv, char** envp) {
     close(fd_s2c);
     unlink(path_c2s);
     unlink(path_s2c);
-    exit(0);
     return 0;
 }
