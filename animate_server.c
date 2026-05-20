@@ -13,7 +13,7 @@
 
 #define BUFF 1024
 
-#define MAXUSERNAME 32+1
+#define MAXUSERNAME 32
 
 
 pthread_mutex_t task_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -180,7 +180,7 @@ void cmd_handler(char* cmd, client_t* client, pid_t client_pid, char* output){
         uint64_t canvas_id;
         size_t w, h;
         color_t c;
-        if (sscanf(cmd, "create_canvas %lu %zu %zu %zu", 
+        if (sscanf(cmd, "create_canvas %zu %zu %u", 
             &w, &h, &c) == 3) {
                 create_canvas(client, client_pid, w, h, c, output);
                 return;
@@ -197,7 +197,7 @@ void cmd_handler(char* cmd, client_t* client, pid_t client_pid, char* output){
         size_t start, end, frame_rate;
         if (sscanf(cmd, "generate %lu %s %zu %zu %zu", 
             &canvas_id, filename, &start, &end, &frame_rate) == 5) {
-                int res = generate_canvas(canvas_id, filename, start, end, frame_rate);
+                //int res = generate_canvas(canvas_id, filename, start, end, frame_rate);
                 return;
         } else {
             return;

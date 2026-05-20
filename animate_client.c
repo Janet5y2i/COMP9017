@@ -115,7 +115,7 @@ int main(int argc, char** argv, char** envp) {
                 if (res_size > 0){
                     res_buf[res_size] = '\0';
                     if (res_buf == "-1\n"){
-                        printf("RPC Failed\n")
+                        printf("RPC Failed\n");
                     } else if (res_buf == "-2\n"){
                         printf("Value error\n");
                     } else if (res_buf == "-3\n"){
