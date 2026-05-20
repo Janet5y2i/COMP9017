@@ -401,6 +401,17 @@ int main(int argc, char** argv, char** envp) {
                         }
                         pthread_cond_signal(&task_cond);
                         pthread_mutex_unlock(&task_mutex);
+                    } else {
+                        pthread_mutex_lock(&task_mutex);
+                        //remove the client if read error or client disconnected
+                        close(clients[i].fd_c2s);
+                        close(clients[i].fd_s2c);
+
+                        for (int j = i; j < num_clients -1 ; j++){
+                            clients[j] = clients[j+1];
+                        }
+                        num_clients--;
+                        pthread_mutex_unlock(&task_mutex);
                     }
                 }
             }
