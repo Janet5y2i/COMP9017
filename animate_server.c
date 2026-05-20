@@ -299,7 +299,7 @@ int main(int argc, char** argv, char** envp) {
     }
     //get server pid
     pid_t pid = getpid();
-    printf("Server PID: %d.\n", pid);
+    printf("Server PID: %d\n", pid);
 
     struct canvas* canvas = animate_create_canvas(100,100,0);
     
