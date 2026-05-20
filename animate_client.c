@@ -62,6 +62,6 @@ int main(int argc, char** argv) {
 
     //wait for sigusr2
     while(1){
-
+        return 0;
     }
 }
