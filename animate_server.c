@@ -83,7 +83,7 @@ int using_placement_cnt = 0;
 
 void signal_handler(int sig, siginfo_t *info, void *ucontext){
     latest_client_pid = info->si_pid;
-    
+    //printf("Received signal from client PID: %d\n", latest_client_pid);
 }
 
 int authorisation (const char *username, pid_t client_pid){
@@ -263,11 +263,16 @@ void* worker_thread(void* arg){
                     if ((strstr(output, "0\n") != NULL) && (strstr(task->cmd, "Disconnect") != NULL)){
                         write(task->fd_s2c, output, strlen(output));
                         //wait a minute to make sure the client receive the message before closing
-                        usleep(5000);
+                        client->is_logged_in = 0;
+                        client->next_res_id++;
+                        //usleep(5000);
                         close(client->fd_c2s);
                         close(client->fd_s2c);
+                        client->fd_c2s = -1;
+                        client->fd_s2c = -1;
                         unlink(client->path_c2s);
                         unlink(client->path_s2c);
+                        
                         break;
                     }
                     write(task->fd_s2c, output, strlen(output));
@@ -329,7 +334,7 @@ int main(int argc, char** argv, char** envp) {
             pause();
         }
         if (latest_client_pid != 0 && num_clients < BUFF){
-            kill(latest_client_pid, SIGUSR2);
+            
             //after receiving signal back to the program
             char path_c2s[BUFF];
             char path_s2c[BUFF];
@@ -345,11 +350,12 @@ int main(int argc, char** argv, char** envp) {
             mkfifo(path_s2c, 0666);
             //kill(latest_client_pid, SIGUSR2);
             
+            kill(latest_client_pid, SIGUSR2);
 
             client_t new_client;
             new_client.client_pid = latest_client_pid;
-            new_client.fd_c2s = open(path_c2s, O_RDONLY | O_NONBLOCK);
-            new_client.fd_s2c = open(path_s2c, O_WRONLY | O_NONBLOCK);
+            new_client.fd_c2s = open(path_c2s, O_RDWR);
+            new_client.fd_s2c = open(path_s2c, O_RDWR);
             new_client.is_logged_in = 0;
             new_client.username[0] = '\0';
             new_client.tasks_num = 0;
@@ -377,12 +383,19 @@ int main(int argc, char** argv, char** envp) {
         FD_ZERO(&read_fds);
         int max_fd = -1;
         for (int i = 0; i < num_clients; i++){
+            if (clients[i].fd_c2s < 0) {
+                continue;
+            }
             FD_SET(clients[i].fd_c2s, &read_fds);
             if (clients[i].fd_c2s > max_fd){
                 max_fd = clients[i].fd_c2s;
             }
         }
 
+        if (max_fd < 0){
+            usleep(1000);
+            continue;
+        }
         struct timeval tv = {0, 100}; //set timeout to 100ms
 
         int waiting = select(max_fd + 1, &read_fds, NULL, NULL, &tv);
