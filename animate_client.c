@@ -119,7 +119,12 @@ int main(int argc, char** argv, char** envp) {
             while(1){
                 char cmd_buf[BUFF];
                 if (fgets(cmd_buf, BUFF, stdin) == NULL) break;
-                write(fd_c2s, cmd_buf, strlen(cmd_buf));
+                size_t cmd_len = strlen(cmd_buf);
+                if (cmd_len > 0 && cmd_buf[cmd_len - 1] != '\n') {
+                    strcat(cmd_buf, "\n");
+                    cmd_len++;
+                }
+                write(fd_c2s, cmd_buf, cmd_len);
                 char res_buf[BUFF];
                 ssize_t res_size = read(fd_s2c, res_buf, sizeof(res_buf)-1);
                 char res_value[BUFF] = {0};
